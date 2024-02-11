@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - Compile time CUDA device checking in Rust</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>Compile time CUDA device checking in Rust</h1>
+    <p class="post-preview-date">24 July 2020</p>
+    <p>Stable <a href="https://www.rust-lang.org/">Rust</a> is <a href="https://without.boats/blog/shipping-const-generics/">soon</a> getting const generics.
+Let's look at how const generics can be used to avoid a certain bug at compile time. The bug?
+Trying to perform operations on data on separate CUDA devices in <a href="https://pytorch.org/">PyTorch</a>.</p>
+<p>The deep learning framework PyTorch is becoming <a href="https://thegradient.pub/state-of-ml-frameworks-2019-pytorch-dominates-research-tensorflow-dominates-industry/">more and more popular</a>.
+It's a great framework, and my current personal favourite.
+When writing PyTorch code, however, it is easy to make small mistakes that cause runtime errors.
+You could for example forget a <code>.to(device)</code> call<a href="#footnote1" id="footnote1text"><sup>1</sup></a>.
+This bug is usually quickly found during testing and little more than an annoyance.
+However, you can actually find and avoid these bugs at compile time with const generics.</p>
+<p>For this experiment, I am going to use the Rust programming language. Specifically,
+I will be using the <a href="https://github.com/LaurentMazare/tch-rs">tch-rs</a> bindings to libtorch. This allows writing
+code that is quite similar to PyTorch, but in Rust.</p>
+<h2>The Problem</h2>
+<p>In deep learning, we work with high dimensional data represented as <a href="https://en.wikipedia.org/wiki/Tensor">tensors</a>. PyTorch allows you to easily perform calculations on these tensors on multiple GPUs in parallel.
+You can explicitly move data to a different device by calling <code>.to(device)</code> on a tensor.
+<code>device</code> is a string: <code>&quot;cpu&quot;</code> or <code>&quot;cuda&quot;</code>, or <code>&quot;cuda:X&quot;</code> for a specific CUDA device at index <code>X</code>.</p>
+<p>For example, the following code adds two tensors with random values on the CPU:</p>
+<pre><code class="language-python">tensor_1 = torch.randn(2, 3).float()
+tensor_2 = torch.randn(2, 3).float()
+result = tensor_1 + tensor_2
+</code></pre>
+<p>And this code runs on the first CUDA device:</p>
+<pre><code class="language-python">device = 'cuda:0'
+tensor_1 = torch.randn(2, 3).float().to(device)
+tensor_2 = torch.randn(2, 3).float().to(device)
+result = tensor_1 + tensor_2
+</code></pre>
+<p>But what if we do this?</p>
+<pre><code class="language-python">device = 'cuda:0'
+tensor_1 = torch.randn(2, 3).float()  # On CPU
+tensor_2 = torch.randn(2, 3).float().to(device)  # On CUDA:0
+result = tensor_1 + tensor_2  # ???
+</code></pre>
+<p>The result is a runtime error:</p>
+<pre><code>RuntimeError: expected backend CPU and dtype Float but got backend CUDA and dtype Float
+</code></pre>
+<p>Or if we try to add a tensor on CUDA:0 and another on CUDA:1, we get:</p>
+<pre><code>RuntimeError: binary_op(): expected both inputs to be on same device, but input a is on cuda:0 and input b is on cuda:1
+</code></pre>
+<h3>Equivalent code in Rust</h3>
+<p>Here is the equivalent code in Rust (using tch-rs) for the failing example:</p>
+<pre><code class="language-rust">let tensor_1 = tch::Tensor::randn(&amp;[2, 3], (Kind::Float, Device::Cpu)); // On CPU
+let tensor_2 = tch::Tensor::randn(&amp;[2, 3], (Kind::Float, Device::Cuda(0)); // On CUDA:0
+let result = &amp;tensor_1 + &amp;tensor_2; // ???
+</code></pre>
+<p>Note how we do mark the device in the code, but it is not checked at compile time. We are going to use const generics to do this.</p>
+<h2>Const Generics</h2>
+<p>Const generics (<a href="https://github.com/rust-lang/rfcs/blob/master/text/2000-const-generics.md">RFC</a>) are a feature of the Rust programming language which allows using constant values in type signatures.
+Why do we need these? Well, let's say we are writing a wrapper <code>DeviceTensor</code> around the <code>Tensor</code> struct from tch-rs,
+with an added generic parameter <code>D</code>, which indicates the device.</p>
+<p>We want to enforce operations between <code>DeviceTensor</code>s to be possible only if those tensors live on the same
+device. We could write <code>DeviceTensor&lt;Cpu&gt;</code> and <code>DeviceTensor&lt;Cuda&gt;</code> using &quot;regular&quot; generics. However, this only works for the
+<code>&quot;cpu&quot;</code> and <code>&quot;cuda&quot;</code> device strings, but will not work for <code>&quot;cuda:X&quot;</code>. An obvious workaround is to introduce additional
+types, <code>Cuda0</code>, <code>Cuda1</code>, etcetera. However, that does not scale.</p>
+<p>The const generics feature allows us to use <code>const</code> (constant) parameters in our type annotations.
+Since integer constants match that description, we can express our device as <code>Cuda&lt;N&gt;</code>, where <code>N</code> is an integer.</p>
+<h2>The Solution</h2>
+<p>To solve the above problem, we will create a struct that is generic over the device on which the internal data
+in that struct lives.</p>
+<pre><code class="language-rust">pub struct DeviceTensor&lt;D&gt; where D: Device {
+    internal: tch::Tensor,
+    _device_marker: std::marker::PhantomData&lt;D&gt;,
+}
+</code></pre>
+<p>Note two things: the <code>where</code> clause, and the <code>_device_marker</code>. The <code>where</code> clause indicates that our <code>D</code>
+parameter must derive from a <code>Device</code> trait (defined below). The <code>_device_marker</code> is <a href="https://doc.rust-lang.org/std/marker/struct.PhantomData.html">phantom data</a>, which is a zero-size field. This is needed because
+otherwise the compiler would notify us that our <code>D</code> parameter is unused, which is an error.</p>
+<p>The <code>Device</code> trait is quite simple. It has a single function <code>tch_device</code>; this is used above to
+move the data to the correct device when constructing it (see above in <code>randn</code>). We implement two device variants. The first is a <code>CpuDevice</code>.
+The second is <code>CudaDevice</code>, which makes use of const generics. The <code>N</code> parameter indicates the device
+on which the tensor lives, and in <code>tch_device</code>, we use <code>N</code> to return the correct device.</p>
+<pre><code class="language-rust">pub trait Device {
+    fn tch_device() -&gt; tch::Device;
+}
+
+pub struct CpuDevice;
+impl Device for CpuDevice {
+    fn tch_device() -&gt; tch::Device {
+        tch::Device::Cpu
+    }
+}
+
+pub struct CudaDevice&lt;const N: usize&gt;; // Const generics!
+impl&lt;const N: usize&gt; Device for CudaDevice&lt;N&gt; {
+    fn tch_device() -&gt; tch::Device {
+        tch::Device::Cuda(N) // We use `N` here
+    }
+}
+</code></pre>
+<p>We can construct a <code>DeviceTensor</code> on the CPU and GPU as follows:</p>
+<pre><code class="language-rust">let tensor_1: DeviceTensor&lt;CpuDevice&gt; = DeviceTensor::randn(&amp;[2, 3]);
+let tensor_2: DeviceTensor&lt;CudaDevice&lt;0&gt;&gt; = DeviceTensor::randn(&amp;[2, 3]);
+</code></pre>
+<p>In the implementation of <code>randn</code>, we will move the tensor to the device passed
+as a type parameter using tch-rs.</p>
+<pre><code class="language-rust">impl&lt;D: Device&gt; DeviceTensor&lt;D&gt; {
+    pub fn randn(size: &amp;[i64]) -&gt; TypedTensor&lt;D&gt; {
+        DeviceTensor {
+            internal: tch::Tensor::randn(size, (Kind::Float, D::tch_device())),
+            _device_marker: Default::default(),
+        }
+    }
+}
+</code></pre>
+<p>We will now define an implementation for the <code>+</code> operator so that we can add two tensors.</p>
+<pre><code class="language-rust">impl&lt;'a, 'b, D: Device&gt; std::ops::Add&lt;&amp;'b DeviceTensor&lt;D&gt;&gt; for &amp;'a DeviceTensor&lt;D&gt; {
+    type Output = DeviceTensor&lt;D&gt;;
+
+    fn add(self, other: &amp;'b DeviceTensor&lt;D&gt;) -&gt; DeviceTensor&lt;D&gt; {
+        DeviceTensor {
+            internal: &amp;self.internal + &amp;other.internal,
+            _device_marker: Default::default(),
+        }
+    }
+}
+</code></pre>
+<p>Note how this simply adds the two tch-rs <code>Tensor</code>s. So where does the compile time check happen?
+Well, it's quite simple: The addition operator is only defined for two <code>DeviceTensor</code> instances
+with the same type parameter <code>D</code>. Try to add two instances with a different <code>D</code>, and you'll get a compile time error.</p>
+<p>We can now add two tensors of the same type on the same device, but as soon as the type or device is different,
+we get a compilation error.</p>
+<pre><code class="language-rust">fn will_compile() {
+    let tensor_1: DeviceTensor&lt;CpuDevice&gt; = DeviceTensor::randn(&amp;[2, 3]);
+    let tensor_2: DeviceTensor&lt;CpuDevice&gt; = DeviceTensor::randn(&amp;[2, 3]);
+
+    let result = &amp;tensor_1 + &amp;tensor_2;
+}
+
+fn wont_compile() {
+    let tensor_1: DeviceTensor&lt;CpuDevice&gt; = DeviceTensor::randn(&amp;[2, 3]);
+    let tensor_2: DeviceTensor&lt;CudaDevice&lt;0&gt;&gt; = DeviceTensor::randn(&amp;[2, 3]);
+
+    let result = &amp;tensor_1 + &amp;tensor_2; // Error!
+}
+</code></pre>
+<p>The static checking of the device does not mean that the device needs to be static. Moving a tensor
+to a different device is easy to implement.
+We simply consume the current tensor and construct a new tensor with a different type, but the same <code>internal</code> data. The data is moved using tch-rs's <code>to_device</code> function to the device derived from the required
+device <code>D2</code>.</p>
+<pre><code class="language-rust">// (In the implementation of DeviceTensor)
+pub fn to_device&lt;D2: Device&gt;(self) -&gt; DeviceTensor&lt;D2&gt; {
+    DeviceTensor {
+        internal: self.internal.to_device(D2::tch_device()),
+        _device_marker: Default::default(),
+    }
+}
+</code></pre>
+<p>This allows us to do things like</p>
+<pre><code class="language-rust">fn main() {
+    let tensor_1: DeviceTensor&lt;CpuDevice&gt; = DeviceTensor::randn(&amp;[2, 3]);
+    let tensor_2: DeviceTensor&lt;CudaDevice&lt;0&gt;&gt; = DeviceTensor::randn(&amp;[2, 3]);
+    let tensor_2_cpu = tensor_2.to_device::&lt;CpuDevice&gt;();
+
+    let result = &amp;tensor_1 + &amp;tensor_2_cpu; // Compiles and runs without error!
+}
+</code></pre>
+<p>Note how <code>to_device</code> takes a <code>self</code> parameter. This means that the ownership of the tensor <code>tensor_2</code> is passed to the function. At the end of the function, <code>self</code> goes out of scope and is dropped. This means that <code>tensor_2</code> can no longer be used after calling <code>to_device</code> on it. Perfect, because its type parameter doesn't
+match the device anymore.
+This extra guarantee of our model for <code>DeviceTensor</code>s we get for free thanks to Rust's ownership model.</p>
+<h2>Conclusion</h2>
+<p>We've seen an example use case for const generics. We've avoided a small bug in PyTorch code
+using const generics, Rust's type system, and its ownership model.</p>
+<p>Are these compile-time guarantees great enough that you should drop Python for deep learning and move straight to Rust?
+No. The above code is far more verbose than any PyTorch code you will ever write to do the same.
+Deep learning research is highly iterative, and Python makes it far easier to do than Rust.
+Python is and will remain the primary language for deep learning for quite some time.</p>
+<p>To quote <a href="http://www.arewelearningyet.com/">Are We Learning Yet</a>,</p>
+<blockquote>
+It's ripe for experimentation, but the ecosystem isn't very complete yet.
+</blockquote>
+<p>Your main PyTorch code will likely see little to no performance benefit from using Rust instead of Python<a href="#footnote2" id="footnote2text"><sup>2</sup></a>,
+and experimentation in Python is simply far faster and easier. The eco-system is built around
+Python.</p>
+<p>But let's say this piqued your interest in Rust. Where could you implement Rust into your deep learning pipeline?
+In your <a href="https://github.com/huggingface/tokenizers">pre-processing code</a>, for example.
+I could also see Rust being used to deploy machine learning models, which is currently often done using C++.</p>
+<p>The complete Rust code for this blog post is available <a href="https://github.com/m-decoster/device-tensors">here</a>. You can discuss this blog post on <a href="https://www.reddit.com/r/rust/comments/hwzhx9/compile_time_cuda_device_checking_in_rust/">Reddit</a>.</p>
+<hr />
+<p><sup id="footnote1">(1)</sup> <code>.to(device)</code> is easy to forget when you're developing on a device without CUDA, and then deploying to a GPU server. <a href="#footnote1text">[Back to text]</a></p>
+<p><sup id="footnote2">(2)</sup> When you're writing deep learning code, most Python is just glue between libraries implemented in C(++), FORTRAN, CUDA, or some other low level language. <a href="#footnote2text">[Back to text]</a></p>
+
+</section>
+
+<script src="../scripts/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>

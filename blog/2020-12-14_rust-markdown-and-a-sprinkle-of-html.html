@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - Rust, Markdown, and a sprinkle of HTML</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>Rust, Markdown, and a sprinkle of HTML</h1>
+    <p class="post-preview-date">14 December 2020</p>
+    <p>I created this website about a year ago and it has evolved quite a bit since its inception. From pure HTML
+to Markdown and a custom static site generator, my focus on a high signal to noise ratio and fast loading times
+were one of the only constants.</p>
+<p>Having an online presence as a researcher doesn't hurt.
+When I started working on this website, I was applying for funding for my PhD project. When you Googled my name,
+you would have seen, among others, my GitHub profile and my Master's thesis. I wanted a landing page
+grouping my research and contact information. I had already made a blog using <a href="https://jekyllrb.com/">Jekyll</a> back in 2017, with the purpose of writing rather often.
+Over the course of time, my definition of <em>often</em> changed quite a bit. After starting my PhD, writing grant applications
+and papers took precedence over writing for my blog.</p>
+<p>As such, when I first created this website, I did not include my blog. It was a very simple website which I wrote entirely
+in HTML, from scratch. When recently I decided to revive my blog, I wanted to move everything to a single place. I wanted to
+keep some of my old posts - especially <a href="https://users.ugent.be/%7Emcdcoste/blog/2017-01-16_fighting-the-borrow-checker.html">the one I'm most proud of</a> - and didn't want to write future posts in HTML.
+The need for a static site generator and markdown parsing returned.</p>
+<p>Jekyll served me well for my original blog, but after having OS updates break my Ruby install, I wanted something different.
+Hugo looked interesting, but the extensive <a href="https://gohugo.io/getting-started/quick-start/">documentation</a> discouraged me.
+I wanted to re-use my old HTML pages and keep my design, without having to learn a whole new system from scratch.
+Over the past few years, Rust has had a special place in my heart, and the template engine <a href="https://tera.netlify.app/">Tera</a> caught my eye.
+A personal website should be something one can tinker with, and what better way to tinker than to reinvent the wheel?</p>
+<p>When people talk about creating their own programming language or game engine, the response is typically discouraging.
+<em>Don't do it! You'll never make something better than C/Unity3D! Why are you even trying to compete with a team of 100 engineers?</em>
+These responses are correct, in a sense, but miss the point that creating a programming language doesn't have to be about competing with
+C. Likewise, a game engine can be tailored to a specific game, and doesn't have to be as general as Unity3D. One can tinker with these
+to learn, or because it's fun. The same thing holds for the static site generator I made. It's littered with <code>unwrap</code>s (Rust's way of saying, &quot;If this returns
+an error just exit&quot;) and probably just as many bugs. But I've had fun writing it, it works for me, and if I discover a bug I can easily fix it. And because it's only
+for me, and only for this website, it can be as specialized as it needs to be. No edge cases to support, no multiple source languages. Just a solution tailored to my needs.
+Sometimes you don't need an entire toolbox, just a hammer and a wrench.</p>
+<p>The main benefit about writing the static site generator myself, though, is that I could easily re-use my old HTML code as templates. The blog posts (in Markdown)
+are first converted to HTML using <a href="https://github.com/raphlinus/pulldown-cmark">pulldown-cmark</a> and then inserted into a generic &quot;post&quot; template. The website builds in less
+than 200 milliseconds. Pages are often only a few kB big, only the blog post pages have Javascript enabled
+for client-side code highlighting, and the style sheets are rather small too. The only external resources: two fonts, which take the longest to load.</p>
+<p>Writing the static site generator only took me part of a weekend. It was a fun learning experience and maybe in the future I can clean up the code
+and make it available. But for now, it has served its purpose well, as a tool and as a side project.</p>
+
+</section>
+
+<script src="../scripts/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>

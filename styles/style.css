@@ -1,0 +1,187 @@
+@font-face {
+  font-family: "Jost";
+  src: url("../assets/fonts/Jost-Regular.ttf") format("truetype");
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+      --background-color: #fafafa;
+      --accent-color: #e23d28;
+      --link-color: #214cce;
+      --text-color: #000000;
+      --separator-color: #d3d3d3;
+      --sidenote-color: #444444;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #333;
+    --accent-color: #e23d28;
+    --link-color: #229edc;
+    --text-color: #fcfcfc;
+    --separator-color: #d3d3d3;
+    --sidenote-color: #ccc;
+  }
+}
+
+body {
+    font-family: 'Jost', sans-serif;
+    font-size: 1.1rem;
+    margin: 20px auto;
+    max-width: 700px;
+    line-height: 1.5;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+@media (max-width: 600px) {
+    body {
+        margin-left: 20px;
+    }
+}
+
+/* Avoid the scroll bar messing with the layout when switching from a page that doesn't need scrolling to one that does
+   https://stackoverflow.com/a/25981719/2221461 */
+html {
+    width: calc(100vw - 34px);
+}
+
+h3 {
+    margin-top: 20px;
+    margin-bottom: 1px;
+}
+
+.publication-container {
+    margin-bottom: 3%;
+}
+
+.publication-pdf {
+    color: var(--accent-color);
+}
+
+.publication {
+    display: block;
+}
+
+.publication-title {
+    font-weight: bold;
+}
+
+.publication-in {
+    font-style: italic;
+}
+
+.publication-urls {
+    list-style: none;
+    padding-left: 0;
+}
+
+header {
+    margin-top: 20px;
+    margin-bottom: 50px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+header {
+    display: block;
+    margin-top: 0;
+}
+
+nav {
+    width: 100%;
+    font-size: 1.2rem;
+    text-align: left;
+}
+
+nav a {
+    padding: 0;
+    margin-left: 0;
+    margin-right: 5%;
+    text-decoration: underline;
+    color: var(--text-color);
+}
+
+a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+figure {
+    margin: 0;
+}
+
+#headshot {
+    float: left;
+    margin-right: 20px;
+}
+
+#headshot img {
+    border-radius: 5px;
+    max-width: 150px;
+    max-height: 255px;
+}
+
+#paginator {
+    border-top: 1px solid var(--separator-color);
+    margin-top: 2%;
+    padding-top: 1%;
+    margin-bottom: 3%;
+}
+
+.post-preview h1 {
+    margin-bottom: 0;
+}
+
+#post h1 {
+    margin-bottom: 0;
+}
+
+.post-preview-date {
+    color: var(--sidenote-color);
+    margin-top: 1%;
+}
+
+blockquote {
+    border-left: 3px solid var(--separator-color);
+    margin-left: 20px;
+    padding-left: 20px;
+}
+
+#post {
+    margin-bottom: 3%;
+}
+
+#post img {
+    max-width: 75%;
+    margin: auto;
+    display: block;
+}
+
+/* Image captions */
+#post img + em {
+    /* Centers horizontally because markdown is rendered as a <em> span... */
+    display: table;
+    margin: 0 auto;
+}
+
+/* Footnote section */
+hr {
+    border: 0;
+    border-top: 1px solid var(--separator-color);
+}
+
+.footnote-definition p {
+    display: inline;
+}
+
+.center {
+    display: table;
+    margin: 0 auto;
+}
+
+mark {
+    background-color: #eeeeee;
+}

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - Modern Python for Data Scientists</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>Modern Python for Data Scientists</h1>
+    <p class="post-preview-date">18 May 2022</p>
+    <p>Recent versions of the <a href="https://www.python.org/">Python programming language</a> have gotten many useful additions that can help you to avoid <em>stringly typed programming</em>, and, in combination with a properly set up development environment, can make your life a lot easier.</p>
+<p>If you've worked with Python before, then you will be very familiar with dictionaries, lists, and tuples. These elementary data structures allow for fast iterations on small scripts, but are also useful in larger projects.</p>
+<p>Common errors when using dictionaries are mistyped keys. There is also no indication as to which keys may be present in a dictionary, until you actually run the program (or go through the code). In contrast, when classes are used, your <abbr title="Integrated Development Environment">IDE</abbr> can provide suggestions for fields, and you know exactly which operations are supported.</p>
+<p>Take the following statement for example:</p>
+<pre><code class="language-python">x = d['a'][1] / 2
+</code></pre>
+<p>This small statement contains several assumptions:</p>
+<ol>
+<li><code>d</code> is a dictionary</li>
+<li><code>d</code> contains a key <code>'a'</code></li>
+<li><code>d['a']</code> is a list/tuple/array with at least 2 elements</li>
+<li><code>d['a'][1]</code> is a number</li>
+</ol>
+<p>This example shows how Python allows you to write code quickly, but that code can become error prone if you are not careful.</p>
+<p>Furthermore, recall the adage, &quot;Code is written only once, but read <em>N</em> times.&quot; Dynamically typed languages such as Python make it easy to iterate quickly, which is very useful in a research context. However, reading existing Python code can be daunting if it is badly documented or lacks type annotations.</p>
+<p>Let's look at a simple artificial example of a function that computes precision and recall from a set of predictions and ground truth labels.</p>
+<pre><code class="language-python">def metrics(y_pred, y_true):
+  assert len(y_pred) == len(y_true), &quot;Expected as many predictions as labels&quot;
+
+  tp = fp = fn = 0
+  for i in range(len(y_pred)):
+    pred = y_pred[i]
+    label = y_true[i]
+    match label, pred:
+      case 1, 1:
+        tp += 1
+      case 1, 0:
+        fn += 1
+      case 0, 1:
+        fp += 1
+
+  precision = tp / (tp + fp) if tp + fp != 0 else None
+  recall = tp / (tp + fn) if tp + fn != 0 else None
+
+  return precision, recall
+</code></pre>
+<p>As said, this function computes precision and recall, but it returns <code>None</code> for the precision if there are only negative predictions, and <code>None</code> for the recall if there are only negative labels.</p>
+<p>This code may appear simple enough, but if we look closer, there are some caveats.</p>
+<ol>
+<li>There is no indication in the function signature that precision and recall can be <code>None</code>. Without reading the code, we might assume that <abbr title="Not a Number">NaN</abbr> values may be returned, or that simply a <code>ZeroDivisionError</code> would be raised. We don't know how to handle edge cases if all we have is the function signature.</li>
+<li>Can we also pass NumPy arrays to this function? In this case, yes, but it isn't immediately clear.</li>
+<li>We need to remember the order in which precision and recall are returned.</li>
+</ol>
+<p>We could add a docstring to the function to explain these things, like so:</p>
+<pre><code class="language-python">def metrics(y_pred, y_true):
+  &quot;&quot;&quot;Compute precision and recall for a list of predictions and corresponding labels.
+
+  :param y_pred: array_like, Binary predictions.
+  :param y_true: array_like, Binary labels.
+  :return: A tuple with precision and recall, or `None` for undefined precision or recall.
+  &quot;&quot;&quot;
+  # ...
+  return precision, recall
+</code></pre>
+<p>However, this does not allow our IDE to automatically check if we have violated this function's contract in any way. We still need to be very careful.</p>
+<p>With some proper programming techniques and some tools presented to us by recent Python versions, we can make our code a lot cleaner, simpler to grasp, and less prone to bugs.</p>
+<h2>Type annotations</h2>
+<p>The first, and probably most well known, technique, is to use type annotations. While they don't make Python a statically typed language, they can make code a lot easier to read.
+Let's add some type annotations to our function.</p>
+<pre><code class="language-python">import numpy as np
+from typing import Tuple, List, Union, Optional
+
+def metrics(y_pred: Union[np.ndarray, List], y_true: Union[np.ndarray, List]) -&gt; Tuple[Optional[float], Optional[float]]:
+  # ...
+  return precision, recall
+</code></pre>
+<p>Now, we immediately know that we can pass Python lists as well as NumPy arrays, and that our function returns a tuple with two values.</p>
+<p>We can also create a type hint for an array-like parameter:</p>
+<pre><code class="language-python">import numpy as np
+from typing import Tuple, List, Union, Optional
+
+ArrayLike = Union[np.ndarray, List]
+
+def metrics(y_pred: ArrayLike, y_true: ArrayLike) -&gt; Tuple[Optional[float], Optional[float]]:
+  # ...
+  return precision, recall
+</code></pre>
+<p>We have solved problems 1 and 2! But we still need to remember the order of the return values. And what if we want to return the F1 score as well? We'd have to update all of the code that references <code>metrics()</code>! We could return a dictionary,
+but then we need to carefully document which keys the dictionary will contain (or risk <code>KeyErrors</code> somewhere downstream).</p>
+<p>A better solution would be to return an instance of a class. Yet, then we need to write an entire class just to hold some data, including <code>__init__</code> and perhaps <code>__repr__</code> and <code>__str__</code> as well.</p>
+<p>This is where data classes come in.</p>
+<h2>Data classes</h2>
+<p>Data classes are just like regular classes, but annotated with a <code>@dataclass</code> property from the <code>dataclasses</code> package. It generates a ton of boilerplate for you, so that you no longer need to write <code>__init__</code>, <code>__repr__</code>, and others, manually.</p>
+<p>We might define a data class for our function's return values as follows:</p>
+<pre><code class="language-python">from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
+class MetricsResult:
+  precision: Optional[float]
+  recall: Optional[float]
+</code></pre>
+<p>We can now easily construct an instance in our function:</p>
+<pre><code class="language-python">import numpy as np
+from typing import Tuple, List, Union, Optional
+
+ArrayLike = Union[np.ndarray, List]
+
+def metrics(y_pred: ArrayLike, y_true: ArrayLike) -&gt; MetricsResult:
+  # ...
+  return MetricsResult(precision, recall)
+</code></pre>
+<p>You can also customize individual fields, e.g., to set a default value or to exclude it from the automatically generated representation string.</p>
+<pre><code class="language-python">  from dataclasses import dataclass
+  from typing import Optional
+  
+  @dataclass
+  class MetricsResult:
+    precision: Optional[float] = None
+    recall: Optional[float] = None
+</code></pre>
+<p>Here is how you stop a field from showing up in <code>__repr__</code>:</p>
+<pre><code class="language-python">  from dataclasses import dataclass, field
+  from typing import Optional
+  
+  @dataclass
+  class MetricsResult:
+    precision: Optional[float] = field(repr=False, default=None)
+    recall: Optional[float] = field(repr=False, default=None)
+</code></pre>
+<p>You can access the values simply using the dot notation, because <code>MetricsResult</code> is just a class. Data classes have many more useful properties, which you can investigate in the <a href="https://docs.python.org/3/library/dataclasses.html">documentation</a>.</p>
+<p>&quot;But,&quot; you might say, &quot;a lot of Python functions expect dicts and tuples.&quot;
+You are correct, many Python libraries (including the standard library) expect dicts, lists and tuples as arguments. Luckily, data classes can easily be converted into these using the <code>.asdict()</code> and <code>.astuple()</code> methods. This also means that data classes are also trivial to serialize to JSON.</p>
+<p>In summary, you can get the best of both worlds using data classes: type checking in your IDE, and the flexibility of dictionaries.</p>
+<h2>Input and output types</h2>
+<p>This tip is not Python specific, but can be a good practice in other programming languages as well.
+Note how we used a class instead of a tuple as a return value. Thanks to this approach, we can easily modify the return value of the function by adding fields, without breaking existing code. We can easily add a third field containing the F1 score.</p>
+<p>It should be clear that being able to make non-breaking changes to your code can save you a lot of time and headaches.</p>
+<h2>Conclusion</h2>
+<p>Python is used in a lot of research and prototyping situations. While prototypes should be thrown away, they often grow organically into larger projects. By using the right programming techniques, your prototype code can be reusable and clear. And as we've seen, it doesn't take a lot of time!</p>
+<p>In the European research project <a href="https://signon-project.eu">SignON</a>, we are processing a lot of datasets with a common Python code base. Thanks to data classes and type annotations, we are able to share and reuse code across international teams more easily and with less hiccups.</p>
+
+</section>
+
+<script src="../scripts/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>

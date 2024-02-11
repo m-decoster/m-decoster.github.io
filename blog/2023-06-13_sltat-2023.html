@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - SLTAT 2023</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>SLTAT 2023</h1>
+    <p class="post-preview-date">13 June 2023</p>
+    <p>I recently attended the eighth edition of the Sign Language Translation and Avatar Technology (<a href="https://sltat.cs.depaul.edu/">SLTAT</a>) workshop at <a href="https://2023.ieeeicassp.org/">ICASSP 2023</a>. The workshop featured talks and presentations from industry and academia on topics ranging from sign language avatars and sign language recognition to data collection.</p>
+<p><img src="../assets/sltat.jpg" alt="img" /></p>
+<p>I presented my work on <a href="https://users.ugent.be/%7Emcdcoste/assets/2023095125.pdf">video-based sign language dictionary querying</a> and had many interesting discussions with the other attendants. We generated a lot of ideas for applications of the proposed methodology.</p>
+<p>The paper discusses how dictionary search can be implemented when there is a distinct lack of data (which is, unfortunately, almost always the case in the sign language processing field). By first training a model on a different but related dataset, we can leverage transfer learning to map dictionary videos to a vector space. Then, a simple vector search can be performed simply by computing pairwise Euclidean distances between query videos and dictionary videos: essentially k-nearest neighbour search. I invite you to read the paper if you want to learn more.</p>
+<p>This work resulted from a proof of concept created for the <a href="https://airo.ugent.be/news/hriwinterschool/">2022 HRI Winterschool on Embodied AI</a>, which featured a visit to our lab. It was exciting to be able to demonstrate a tangible application of sign language recognition research, and to then discuss it at SLTAT.</p>
+<p>Overall, the workshop was inspiring and I am looking forward to seeing where the field goes next!</p>
+
+</section>
+
+<script src="../scripts/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>

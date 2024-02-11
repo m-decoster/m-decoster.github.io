@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - Creating a web API using Iron</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>Creating a web API using Iron</h1>
+    <p class="post-preview-date">24 November 2016</p>
+    <p><em>The following is a word-for-word copy of a tutorial I wrote in November of 2016. The original tutorial can be found <a href="https://github.com/m-decoster/iron-example">on my GitHub page</a>.</em></p>
+<p>In this tutorial, we will be looking at how to use <a href="http://ironframework.io">Iron</a> to create a web API.<br />
+We will be creating an API for a small public Twitter-like application, where anyone can create new posts,
+posts can be opened individually or shown in a feed chronologically.</p>
+<p>This tutorial assumes familiarity with Rust, Rust macros and basic knowledge of how HTTP works.</p>
+<p>This tutorial starts from a complete project and explains the different parts
+of the project. After finishing this tutorial, you should have a basic understanding of how
+an Iron application is constructed and how to create your own, more complicated, web applications. </p>
+<h2>Getting started</h2>
+<p>You should start now by creating a new binary project:</p>
+<pre><code>cargo new --bin mywebapi
+</code></pre>
+<h2>Cargo dependencies</h2>
+<p>You should have following dependencies in your <code>Cargo.toml</code> file:</p>
+<pre><code>[dependencies]
+iron = &quot;0.4&quot;
+router = &quot;0.4&quot;
+logger = &quot;0.2&quot;
+env_logger = &quot;0.3&quot;
+rustc-serialize = &quot;0.3&quot;
+chrono = { version = &quot;0.2&quot;, features = [&quot;rustc-serialize&quot;] }
+uuid = { version = &quot;0.2&quot;, features = [&quot;v4&quot;, &quot;rustc-serialize&quot;] }
+</code></pre>
+<p><code>iron</code> provides us with a web server. <code>router</code> helps with routing. <code>logger</code> and <code>env_logger</code> allow us to log requests.
+<code>rustc-serialize</code> allows us to serialize structs to JSON on Stable Rust. <code>chrono</code> provides us with an interface
+for date and time representations that works easily with <code>rustc-serialize</code>. Finally, we use <code>uuid</code> to be able
+to generate unique ids for posts.</p>
+<h2>Modeling our data</h2>
+<p>We will be modeling posts which have the following properties:</p>
+<ul>
+<li>A summary or a short title</li>
+<li>A longer content</li>
+<li>An author handle</li>
+<li>The date and time of posting in the UTC timezone</li>
+<li>A unique identifier</li>
+</ul>
+<p>Create a file called <code>model.rs</code> and add the following definitions.</p>
+<pre><code class="language-rust">use chrono::datetime::DateTime;
+use chrono::offset::utc::UTC;
+use uuid::Uuid;
+
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+pub struct Post {
+    summary: String,
+    contents: String,
+    author_handle: String,
+    date_time: DateTime&lt;UTC&gt;,
+    uuid: Uuid,
+}
+
+impl Post {
+    pub fn new(summary: &amp;str,
+               contents: &amp;str,
+               author: &amp;Author,
+               date_time: DateTime&lt;UTC&gt;,
+               uuid: Uuid)
+               -&gt; Post {
+        Post {
+            summary: summary.to_string(),
+            contents: contents.to_string(),
+            author_handle: author.handle.clone(),
+            date_time: date_time,
+            uuid: uuid,
+        }
+    }
+
+    pub fn uuid(&amp;self) -&gt; &amp;Uuid {
+        &amp;self.uuid
+    }
+}
+
+#[derive(Clone, Debug, RustcEncodable, RustcDecodable)]
+pub struct Author {
+    handle: String,
+}
+
+impl Author {
+    pub fn new(handle: &amp;str) -&gt; Author {
+        Author { handle: handle.to_string() }
+    }
+}
+</code></pre>
+<p>The <code>Author</code> struct is not strictly necessary here, but I think it's cleaner to
+reserve this for the future. Most of the above code should be fairly self explanatory.
+Deriving <code>RustcEncodable</code> and <code>RustcDecodable</code> allows us to have the <code>rustc-serialize</code> library
+automatically encode and decode objects to and from JSON.</p>
+<h2>Saving our data</h2>
+<p>For this tutorial, a real database would be out of scope. That's why we are going to store everything
+in memory instead. Our database will be a simple <code>Vec&lt;Post&gt;</code> that is available in all of our web handlers.
+We will be able to add posts to this database, or get all the posts from the database.</p>
+<p>Create a file called <code>database.rs</code> and add the following, self-explanatory code.</p>
+<pre><code class="language-rust">use model::Post;
+
+#[derive(Clone, Debug)]
+pub struct Database {
+    posts: Vec&lt;Post&gt;,
+}
+
+impl Database {
+    pub fn new() -&gt; Database {
+        Database { posts: vec![] }
+    }
+
+    pub fn add_post(&amp;mut self, post: Post) {
+        self.posts.push(post);
+    }
+
+    pub fn posts(&amp;self) -&gt; &amp;Vec&lt;Post&gt; {
+        &amp;self.posts
+    }
+}
+</code></pre>
+<h2>Handling HTTP requests</h2>
+<p>Now that we've defined our data and a simple in-memory data store, we will be looking
+at the meat of the application: handling the actual web requests.</p>
+<p>Start by creating a file <code>handlers.rs</code>. We will need the following <code>use</code> statements:</p>
+<pre><code class="language-rust">use std::sync::{Arc, Mutex};
+use std::io::Read;
+use iron::{Handler, status, IronResult, Response, Request, AfterMiddleware};
+use iron::headers::ContentType;
+use rustc_serialize::json;
+use database::Database;
+use uuid::Uuid;
+use router::Router;
+use model::Post;
+use std::error::Error;
+</code></pre>
+<h3>Macros</h3>
+<p>A lot of code has to deal with JSON encoding and decoding, mutexes or getting parameters from
+an HTTP request. That is why we will be creating three macros:</p>
+<ul>
+<li>A first macro that allows us to match a <code>Result</code> to get the inner value, or return an <code>InternalServerError</code>,
+or some other HTTP error. This macro is similar to the <code>try</code> macro from the Rust standard library.</li>
+<li>A second macro that allows us to write <code>lock!(mutex)</code> instead of <code>mutex.lock().unwrap()</code>. We will be
+calling <code>unwrap</code> on all of the locked mutexes in this code for simplicity's sake. I also haven't figured out
+yet why one wouldn't call <code>unwrap</code>, as I'm not sure it's possible to recover from such an error. If you know why,
+please leave a comment.</li>
+<li>A third macro to easily get a parameter from an HTTP GET request, or, if the parameter is not present,
+return <code>BadRequest</code>, or if something went wrong, return <code>InternalServerError</code>.</li>
+</ul>
+<pre><code class="language-rust">macro_rules! try_handler {
+    ( $e:expr ) =&gt; {
+        match $e {
+            Ok(x) =&gt; x,
+            Err(e) =&gt; return Ok(Response::with((status::InternalServerError, e.description())))
+        }
+    };
+    ( $e:expr, $error:expr ) =&gt; {
+        match $e {
+            Ok(x) =&gt; x,
+            Err(e) =&gt; return Ok(Response::with(($error, e.description())))
+        }
+    }
+}
+</code></pre>
+<p>This first macro has two variants: the first returns an <code>InternalServerError</code> on failure,
+the second one an error that has been provided.</p>
+<pre><code class="language-rust">macro_rules! lock {
+    ( $e:expr ) =&gt; { $e.lock().unwrap() }
+}
+</code></pre>
+<p>This very simple macro is simply a syntactic replacement for <code>.lock().unwrap()</code>.</p>
+<pre><code class="language-rust">macro_rules! get_http_param {
+    ( $r:expr, $e:expr ) =&gt; {
+        match $r.extensions.get::&lt;Router&gt;() {
+            Some(router) =&gt; {
+                match router.find($e) {
+                    Some(val) =&gt; val,
+                    None =&gt; return Ok(Response::with(status::BadRequest)),
+                }
+            }
+            None =&gt; return Ok(Response::with(status::InternalServerError)),
+        }
+    }
+}
+</code></pre>
+<p>This final macro allows us to obtain a parameter from an HTTP GET request.
+We first make sure that we can get our <code>Router</code>. If this is not possible, something terrible
+went wrong, so we return <code>InternalServerError</code>. If we cannot find the required parameter,
+the users have sent a <code>BadRequest</code>.</p>
+<p>So far, this is all fairly simple. These macros will make our lives a lot easier when writing the actual
+request handlers.</p>
+<h3>Request handlers</h3>
+<p>Now, let's have a look at the actual handlers. We will first create a struct
+that will contain all handlers:</p>
+<pre><code class="language-rust">pub struct Handlers {
+    pub feed: FeedHandler,
+    pub make_post: MakePostHandler,
+    pub post: PostHandler,
+}
+
+impl Handlers {
+    pub fn new(database: Database) -&gt; Handlers {
+        let database = Arc::new(Mutex::new(database));
+        Handlers {
+            feed: FeedHandler::new(database.clone()),
+            make_post: MakePostHandler::new(database.clone()),
+            post: PostHandler::new(database.clone()),
+        }
+    }
+}
+</code></pre>
+<p>As you can see, each handler has access to our data store through an <code>Arc&lt;Mutex&lt;Database&gt;&gt;</code>.
+Why is this? Well, we need the following features for our data store:</p>
+<ul>
+<li>We want it to be accessible in all handlers (this should make you think: <code>&amp;</code> or <code>Rc</code>)</li>
+<li>We want changes from one handler to be visible in other handlers immediately (this should make you think <code>RefCell</code>)</li>
+<li>We need it to be thread safe. The thread safe equivalent of <code>Rc&lt;RefCell&gt;&gt;</code> is <code>Arc&lt;Mutex&gt;</code>.</li>
+</ul>
+<p>In case you don't know what <code>Arc</code> or <code>Mutex</code> are, you should have a look at the excellent sections
+on them in the <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html">Rust documentation</a>.</p>
+<h4>Feed handler</h4>
+<p>Let's start with the easiest handler: the one that returns a list of all posts.</p>
+<pre><code class="language-rust">pub struct FeedHandler {
+    database: Arc&lt;Mutex&lt;Database&gt;&gt;,
+}
+
+impl FeedHandler {
+    fn new(database: Arc&lt;Mutex&lt;Database&gt;&gt;) -&gt; FeedHandler {
+        FeedHandler { database: database }
+    }
+}
+
+impl Handler for FeedHandler {
+    fn handle(&amp;self, _: &amp;mut Request) -&gt; IronResult&lt;Response&gt; {
+        let payload = try_handler!(json::encode(lock!(self.database).posts()));
+        Ok(Response::with((status::Ok, payload)))
+    }
+}
+</code></pre>
+<p>The final <code>impl</code> block shows us how to implement <code>iron::Handler</code>: we handle a request
+and return a response. The response itself is wrapped in an <code>IronResult</code>, but the documentation
+on this is not very clear and as far as I know it's okay to always return <code>Ok</code>, as long as you
+return the appropriate HTTP status code. Maybe if you're doing something more fancy, you might need
+to return <code>Err</code>.</p>
+<p>We immediately see two of our macros in action: <code>try_handler</code> and <code>lock</code>. We lock the database,
+obtain the posts, encode this as a JSON list and send this with <code>HTTP 200 OK</code>.</p>
+<p>Without the macros, the code would look like this:</p>
+<pre><code class="language-rust">fn handle(&amp;self, _: &amp;mut Request) -&gt; IronResult&lt;Response&gt; {
+    let payload = match json::encode(self.database.lock().unwrap().posts()) {
+        Ok(pl) =&gt; pl,
+        Err(e) =&gt; return Ok(Response::with((status::InternalServerError, e.description()))),
+    };
+    Ok(Response::with((status::Ok, payload)))
+}
+</code></pre>
+<p>As you can see, the macros do make this code a lot more clear.</p>
+<h4>Make post handler</h4>
+<p>Now let's allow users to create posts.</p>
+<pre><code class="language-rust">pub struct MakePostHandler {
+    database: Arc&lt;Mutex&lt;Database&gt;&gt;,
+}
+
+impl MakePostHandler {
+    fn new(database: Arc&lt;Mutex&lt;Database&gt;&gt;) -&gt; MakePostHandler {
+        MakePostHandler { database: database }
+    }
+}
+
+impl Handler for MakePostHandler {
+    fn handle(&amp;self, req: &amp;mut Request) -&gt; IronResult&lt;Response&gt; {
+        let mut payload = String::new();
+        try_handler!(req.body.read_to_string(&amp;mut payload));
+
+        let post = try_handler!(json::decode(&amp;payload), status::BadRequest);
+
+        lock!(self.database).add_post(post);
+
+        Ok(Response::with((status::Created, payload)))
+    }
+}
+</code></pre>
+<p>The <code>handle</code> function is a bit more complicated now. First we obtain the payload from the request's body:
+this is the data we are sending with the HTTP POST request. Then, we try to
+decode the payload into a <code>Post</code> object, returning a <code>BadRequest</code> if the JSON is malformed.</p>
+<p>Next, we add the post to the database and return 201 Created along with the original payload.</p>
+<h4>Post handler</h4>
+<p>We also want to be able to view individual posts. For this, we need to have a URL parameter.
+The handler looks like this:</p>
+<pre><code class="language-rust">pub struct PostHandler {
+    database: Arc&lt;Mutex&lt;Database&gt;&gt;,
+}
+
+impl PostHandler {
+    fn new(database: Arc&lt;Mutex&lt;Database&gt;&gt;) -&gt; PostHandler {
+        PostHandler { database: database }
+    }
+
+    fn find_post(&amp;self, id: &amp;Uuid) -&gt; Option&lt;Post&gt; {
+        let locked = lock!(self.database);
+        let mut iterator = locked.posts().iter();
+        iterator.find(|post| post.uuid() == id).map(|post| post.clone())
+    }
+}
+
+impl Handler for PostHandler {
+    fn handle(&amp;self, req: &amp;mut Request) -&gt; IronResult&lt;Response&gt; {
+        let ref post_id = get_http_param!(req, &quot;id&quot;);
+
+        let id = try_handler!(Uuid::parse_str(post_id), status::BadRequest);
+
+        if let Some(post) = self.find_post(&amp;id) {
+            let payload = try_handler!(json::encode(&amp;post), status::InternalServerError);
+            Ok(Response::with((status::Ok, payload)))
+        } else {
+            Ok(Response::with((status::NotFound)))
+        }
+    }
+}
+</code></pre>
+<p>Our handler has a special function <code>find_post</code> that looks through the database
+for a post with a matching id. If we find one, we clone it and return it. Otherwise, we return <code>None</code>.</p>
+<p>Note how we can call <code>map</code> on the <code>Option</code> resulting from <code>find</code> because <code>Option</code> implements
+the <code>Iterator</code> trait, which is really cool and useful!</p>
+<p>The handler itself first attempts to find the <code>id</code> parameter using our macro. If it finds this,
+it tries to parse it to the UUID. If it is malformed, we return 400 Bad Request.</p>
+<p>Finally, if we find a post, we encode it and return it with 200 OK. If we don't find it,
+we return 404 Not Found.</p>
+<p>Great! We have now defined all of our handlers. Only one thing remains to be done in this file.</p>
+<h3>Middleware</h3>
+<p>Iron uses middleware. Middleware can be either BeforeMiddleware, AroundMiddleware or AfterMiddleware.</p>
+<p>BeforeMiddleware can modify requests before they are handled, AroundMiddleware before and after and
+AfterMiddleware after they are handled but before the response is sent.</p>
+<p>In this case, we need an AfterMiddleware to make sure that our responses have the correct content type:
+<code>application/json</code>. This is really simple:</p>
+<pre><code class="language-rust">pub struct JsonAfterMiddleware;
+
+impl AfterMiddleware for JsonAfterMiddleware {
+    fn after(&amp;self, _: &amp;mut Request, mut res: Response) -&gt; IronResult&lt;Response&gt; {
+        res.headers.set(ContentType::json());
+        Ok(res)
+    }
+}
+</code></pre>
+<p>We simply update the headers on the response, and we're done.</p>
+<h2>Putting it all together</h2>
+<p>We have now defined all of the code that is needed for our data, data store and handlers.</p>
+<p>Now it is time to put everything together and have a running web application.</p>
+<p>We should start by defining all of the external crates, models, and adding our <code>use</code> statements.</p>
+<pre><code class="language-rust">extern crate iron;
+extern crate router;
+extern crate logger;
+extern crate env_logger;
+extern crate rustc_serialize;
+extern crate chrono;
+extern crate uuid;
+
+mod model;
+mod database;
+mod handlers;
+
+use model::*;
+use database::Database;
+use handlers::*;
+
+use iron::prelude::Chain;
+use iron::Iron;
+use router::Router;
+use logger::Logger;
+use uuid::Uuid;
+</code></pre>
+<p>Now, in the <code>main</code> function, we will start by initialising our logger and creating a pair of
+BeforeMiddleware and AfterMiddleware that is required for the logger.</p>
+<pre><code class="language-rust">fn main() {
+    env_logger::init().unwrap();
+    let (logger_before, logger_after) = Logger::new(None);
+
+    // ...
+</code></pre>
+<p>Now we create two first entries in our database to have something to show.</p>
+<pre><code class="language-rust">// ...
+let mut database = Database::new();
+let author = Author::new(&quot;Me&quot;);
+let post = Post::new(&quot;First post&quot;,
+                     &quot;This is the first post ever&quot;,
+                     &amp;author,
+                     chrono::offset::utc::UTC::now(),
+                     Uuid::new_v4());
+database.add_post(post);
+let post = Post::new(&quot;My web app is now online&quot;,
+                     &quot;Today marks the day that this app is online!&quot;,
+                     &amp;author,
+                     chrono::offset::utc::UTC::now(),
+                     Uuid::new_v4());
+database.add_post(post);
+// ...
+</code></pre>
+<p>Note the construction of the posts: <code>Uuid::new_v4()</code> will generate a random UUID for each post.
+We also use <code>chrono::offset::utc::UTC::now()</code> to simulate that these posts were created just now.</p>
+<p>Now we instantiate our handlers and middleware:</p>
+<pre><code class="language-rust">// ...
+let handlers = Handlers::new(database);
+let json_content_middleware = JsonAfterMiddleware;
+// ...
+</code></pre>
+<p>And now we have to define our routes. We will map each route to its handler and a different path:</p>
+<pre><code class="language-rust">// ...
+let mut router = Router::new();
+router.get(&quot;/feed&quot;, handlers.feed, &quot;feed&quot;);
+router.post(&quot;/post&quot;, handlers.make_post, &quot;make_post&quot;);
+router.get(&quot;/post/:id&quot;, handlers.post, &quot;post&quot;);
+// ...
+</code></pre>
+<p>We also need to define a Chain for our middleware: we need to make sure the logger middlewares
+are the first and last (see the <code>logger</code> crate documentation), and we also need to add our JSON middleware.</p>
+<pre><code class="language-rust">// ...
+let mut chain = Chain::new(router);
+chain.link_before(logger_before); // Should be first!
+chain.link_after(json_content_middleware);
+chain.link_after(logger_after); // Should be last!
+// ...
+</code></pre>
+<p>Finally, we can start our server!</p>
+<pre><code class="language-rust">    // ...
+    Iron::new(chain).http(&quot;localhost:3000&quot;).unwrap();
+}
+</code></pre>
+<p>We can run our server and see the logs by executing <code>RUST_LOG=logger=info cargo run</code> on the command line.</p>
+<p>To try it out, you can use <code>curl</code>:</p>
+<ul>
+<li>To look at the feed: <code>curl -v localhost:3000/feed</code></li>
+<li>To look at a specific post, find its id in the feed and then use <code>curl -v localhost:3000/post/&lt;id&gt;</code></li>
+<li>To create a new post, make sure you get the JSON syntax right and then use <code>curl -v --data '&lt;json&gt;' localhost:3000/post</code></li>
+</ul>
+<h2>Where to go from here</h2>
+<p>You now have a working web application. It does not do much, however. Things you can do are:</p>
+<ul>
+<li>Have a look at the libraries provided by the Iron team (<a href="https://github.com/iron-graveyard/common">Iron Common</a>)</li>
+<li>Implement authentication, registering and logging in</li>
+<li>Implement a database using for example PostgreSQL</li>
+<li>Implement updating or deleting posts</li>
+<li>...</li>
+</ul>
+<p>If you are getting any errors, you can check out the complete code <a href="https://github.com/m-decoster/iron-example">here</a>.</p>
+
+</section>
+
+<script src="../scripts/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>

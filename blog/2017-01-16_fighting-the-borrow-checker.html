@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - Fighting the Borrow Checker</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>Fighting the Borrow Checker</h1>
+    <p class="post-preview-date">16 January 2017</p>
+    <p>One of the most common questions asked by beginners about Rust is
+&quot;How do I satisfy the borrow checker?&quot;. The borrow checker is probably
+one of the steepest parts of Rust's learning curve, and it is
+understandable that beginners have some trouble applying the concepts
+in a real world situation.</p>
+<p>Just recently, on the <a href="https://www.reddit.com/r/rust">Rust subreddit</a>,
+a post was made, called <a href="https://www.reddit.com/r/rust/comments/5ny09j/tips_to_not_fight_the_borrow_checker/">&quot;Tips to not fight the borrow checker?&quot;</a>.</p>
+<p>Many Rust community members replied with helpful tips on how to avoid
+running into trouble with the borrow checker - tips that also shine some
+light on how you should design your Rust code (<em>hint: not like your OOP Java code</em>).</p>
+<p>In this blog post, I will attempt to create some pseudo real world examples of common pitfalls.</p>
+<p>First, let's recap the borrow checker rules:</p>
+<ul>
+<li>You can only have one mutable reference to a variable at a time</li>
+<li>You can have as many immutable references to a variable as you want</li>
+<li>You cannot mix mutable and immutable references to the same variable</li>
+</ul>
+<h3>Blocks that are too long</h3>
+<p>Because you can only have one mutable borrow at any given time, you
+might get issues if you want to mutably borrow something twice in the same
+function. Even if the borrows don't overlap, the borrow checker will complain.</p>
+<p>Let's look at an example that does not compile.</p>
+<pre><code class="language-rust">struct Person {
+    name: String,
+    age: u8,
+}
+
+impl Person {
+    fn new(name: &amp;str, age: u8) -&gt; Person {
+        Person {
+            name: name.into(),
+            age: age,
+        }
+    }
+    
+    fn celebrate_birthday(&amp;mut self) {
+        self.age += 1;
+        
+        println!(&quot;{} is now {} years old!&quot;, self.name, self.age);
+    }
+    
+    fn name(&amp;self) -&gt; &amp;str {
+        &amp;self.name
+    }
+}
+
+fn main() {
+    let mut jill = Person::new(&quot;Jill&quot;, 19);
+    let jill_ref_mut = &amp;mut jill;
+    jill_ref_mut.celebrate_birthday();
+    println!(&quot;{}&quot;, jill.name()); // cannot borrow `jill` as immutable
+                                 // because it is also borrowed
+                                 // as mutable
+}
+</code></pre>
+<p>The problem here is that we have mutably borrowed <code>jill</code> and then try to use
+it again to print her name. The fix is indeed to limit the scope of the borrow.</p>
+<pre><code class="language-rust">fn main() {
+    let mut jill = Person::new(&quot;Jill&quot;, 19);
+    {
+        let jill_ref_mut = &amp;mut jill;
+        jill_ref_mut.celebrate_birthday();
+    }
+    println!(&quot;{}&quot;, jill.name());
+}
+</code></pre>
+<p>In general, it can be a good idea to limit the scope of your
+mutable references. This avoids problems like the one showcased above.</p>
+<h3>Chaining function calls</h3>
+<p>You often want to chain function calls to reduce the number of local variables and
+let-bindings in your code. Consider that you have a library that provides <code>Person</code>
+and <code>Name</code> structs. You want to get a mutable reference to a person's name and update
+it.</p>
+<pre><code class="language-rust">#[derive(Clone)]
+struct Name {
+    first: String,
+    last: String,
+}
+
+impl Name {
+    fn new(first: &amp;str, last: &amp;str) -&gt; Name {
+        Name {
+            first: first.into(),
+            last: last.into(),
+        }
+    }
+    
+    fn first_name(&amp;self) -&gt; &amp;str {
+        &amp;self.first
+    }
+}
+
+struct Person {
+    name: Name,
+    age: u8,
+}
+
+impl Person {
+    fn new(name: Name, age: u8) -&gt; Person {
+        Person {
+            name: name,
+            age: age,
+        }
+    }
+    
+    fn name(&amp;self) -&gt; Name {
+        self.name.clone()
+    }
+}
+
+fn main() {
+    let name = Name::new(&quot;Jill&quot;, &quot;Johnson&quot;);
+    let mut jill = Person::new(name, 20);
+    
+    let name = jill.name().first_name(); // borrowed value does not
+                                         // live long enough
+}
+</code></pre>
+<p>The problem here is that <code>Person::name</code> returns an owned value instead of a reference.
+If we then try to obtain a reference using <code>Name::first_name</code>, the borrow checker will complain.
+As soon as the statement ends, the value that is returned from <code>jill.name()</code> will be dropped,
+and <code>name</code> will be a dangling reference.</p>
+<p>The solution is to introduce a temporary variable.</p>
+<pre><code class="language-rust">fn main() {
+    let name = Name::new(&quot;Jill&quot;, &quot;Johnson&quot;);
+    let mut jill = Person::new(name, 20);
+    
+    let name = jill.name();
+    let name = name.first_name();
+}
+</code></pre>
+<p>Normally, we would return a <code>&amp;Name</code> from <code>Person::name</code>, but there are some cases in which
+returning an owned value is the only reasonable option. If this happens to you, it's good to know
+how to fix your code.</p>
+<h3>Circular references</h3>
+<p>Sometimes, you end up with circular references in your code. This is something I used to do
+way too often in C. Trying to fight the borrow checker in Rust showed me how dangerous this kind of
+code can actually be.</p>
+<p>Let's create a representation of a class with enrolled pupils. The class references the pupils, and they
+also keep references to the classes they are enrolled in.</p>
+<pre><code class="language-rust">struct Person&lt;'a&gt; {
+    name: String,
+    classes: Vec&lt;&amp;'a Class&lt;'a&gt;&gt;,
+}
+
+impl&lt;'a&gt; Person&lt;'a&gt; {
+    fn new(name: &amp;str) -&gt; Person&lt;'a&gt; {
+        Person {
+            name: name.into(),
+            classes: Vec::new(),
+        }
+    }
+}
+
+struct Class&lt;'a&gt; {
+    pupils: Vec&lt;&amp;'a Person&lt;'a&gt;&gt;,
+    teacher: &amp;'a Person&lt;'a&gt;,
+}
+
+impl&lt;'a&gt; Class&lt;'a&gt; {
+    fn new(teacher: &amp;'a Person&lt;'a&gt;) -&gt; Class&lt;'a&gt; {
+        Class {
+            pupils: Vec::new(),
+            teacher: teacher,
+        }
+    }
+    
+    fn add_pupil(&amp;'a mut self, pupil: &amp;'a mut Person&lt;'a&gt;) {
+        pupil.classes.push(self);
+        self.pupils.push(pupil);
+    }
+}
+
+fn main() {
+    let jack = Person::new(&quot;Jack&quot;);
+    let jill = Person::new(&quot;Jill&quot;);
+    let teacher = Person::new(&quot;John&quot;);
+    
+    let mut borrow_chk_class = Class::new(&amp;teacher);
+    borrow_chk_class.add_pupil(&amp;mut jack);
+    borrow_chk_class.add_pupil(&amp;mut jill);
+}
+</code></pre>
+<p>If we try to compile this, we get bombarbed with errors.
+The main problem here is that we are trying to store references to classes
+in persons and vice versa. When the variables get dropped (in reverse order of creation),
+<code>teacher</code> will be dropped while still being referenced indirectly by <code>jill</code> and <code>jack</code>
+through their enrollments!</p>
+<p>The simplest (but hardly cleanest) solution here is to avoid the borrow checker altogether and use <code>Rc&lt;RefCell&gt;</code>s instead.</p>
+<pre><code class="language-rust">use std::rc::Rc;
+use std::cell::RefCell;
+
+struct Person {
+    name: String,
+    classes: Vec&lt;Rc&lt;RefCell&lt;Class&gt;&gt;&gt;,
+}
+
+impl Person {
+    fn new(name: &amp;str) -&gt; Person {
+        Person {
+            name: name.into(),
+            classes: Vec::new(),
+        }
+    }
+}
+
+struct Class {
+    pupils: Vec&lt;Rc&lt;RefCell&lt;Person&gt;&gt;&gt;,
+    teacher: Rc&lt;RefCell&lt;Person&gt;&gt;,
+}
+
+impl Class {
+    fn new(teacher: Rc&lt;RefCell&lt;Person&gt;&gt;) -&gt; Class {
+        Class {
+            pupils: Vec::new(),
+            teacher: teacher.clone(),
+        }
+    }
+    
+    fn pupils_mut(&amp;mut self) -&gt; &amp;mut Vec&lt;Rc&lt;RefCell&lt;Person&gt;&gt;&gt; {
+        &amp;mut self.pupils
+    }
+    
+    fn add_pupil(class: Rc&lt;RefCell&lt;Class&gt;&gt;, pupil: Rc&lt;RefCell&lt;Person&gt;&gt;) {
+        pupil.borrow_mut().classes.push(class.clone());
+        class.borrow_mut().pupils_mut().push(pupil);
+    }
+}
+
+fn main() {
+    let jack = Rc::new(RefCell::new(Person::new(&quot;Jack&quot;)));
+    let jill = Rc::new(RefCell::new(Person::new(&quot;Jill&quot;)));
+    let teacher = Rc::new(RefCell::new(Person::new(&quot;John&quot;)));
+    
+    let mut borrow_chk_class = Rc::new(RefCell::new(Class::new(teacher)));
+    Class::add_pupil(borrow_chk_class.clone(), jack);
+    Class::add_pupil(borrow_chk_class, jill);
+}
+</code></pre>
+<p><del>Note that now we no longer have the safety guarantees of the borrow checker.</del>
+<strong>Edit:</strong> As /u/steveklabnik1 <a href="https://www.reddit.com/r/rust/comments/5obein/fighting_the_borrow_checker/dci15nw/">pointed out</a>, a better way to phrase this is:</p>
+<blockquote>
+<p>Note that because Rc and RefCell both rely on run-time mechanisms to ensure safety, we've lost some amount of compile-time checking: RefCell will panic if we try to borrow_mut twice, for example.</p>
+</blockquote>
+<p>Additionally, <a href="https://www.reddit.com/r/rust/comments/5obein/fighting_the_borrow_checker/dcj1y14/">here</a> is a comment indicating why the code is still safe
+with runtime checks:</p>
+<blockquote>
+<p>I liked that you said one would lose &quot;guarantees&quot; - if the check is done at runtime, we don't have any guarantee it's correct unless we test it.
+But it's not the safety guarantees that it loses, the code with <code>RefCell</code> is just as safe. And it's safe because when it fails, it panics rather than triggering undefined behavior.
+This is a common theme in Rust: where you can, catch safety errors at compile time. If you must rely on run-time checking, panic at places where it would trigger UB. It's the difference between <a href="https://doc.rust-lang.org/std/vec/struct.Vec.html#method.get"><code>vec.get(10)</code></a> that returns an option, and <code>vec[10]</code> that panics on out-of-bounds access.
+This point also applies to <a href="https://www.reddit.com/r/rust/comments/5obein/fighting_the_borrow_checker/dci1ecq/">this comment</a> - when you refer to objects by indices on vectors, you lose some guarantees (that this object is live - or even worse, that this index points to the same object you previously had, since it may have been reused!). But not safety guarantees, Rust still guarantees memory safety.
+A technique to make indices less error prone due to reuse is to also have a &quot;generation&quot; number, where every time you reuse an index you increment the generation. This is used by <a href="https://github.com/slide-rs/specs">specs</a>.</p>
+</blockquote>
+<p>Perhaps a better option is to refactor your code in a way that you no longer need circular references.</p>
+<p>If you've ever normalised a relational database, this is actually quite similar. We store the references
+between persons and classes in a separate struct.</p>
+<pre><code class="language-rust">struct Enrollment&lt;'a&gt; {
+    person: &amp;'a Person,
+    class: &amp;'a Class&lt;'a&gt;,
+}
+
+impl&lt;'a&gt; Enrollment&lt;'a&gt; {
+    fn new(person: &amp;'a Person, class: &amp;'a Class&lt;'a&gt;) -&gt; Enrollment&lt;'a&gt; {
+        Enrollment {
+            person: person,
+            class: class,
+        }
+    }
+}
+
+struct Person {
+    name: String,
+}
+
+impl Person {
+    fn new(name: &amp;str) -&gt; Person {
+        Person {
+            name: name.into(),
+        }
+    }
+}
+
+struct Class&lt;'a&gt; {
+    teacher: &amp;'a Person,
+}
+
+impl&lt;'a&gt; Class&lt;'a&gt; {
+    fn new(teacher: &amp;'a Person) -&gt; Class&lt;'a&gt; {
+        Class {
+            teacher: teacher,
+        }
+    }
+}
+
+struct School&lt;'a&gt; {
+    enrollments: Vec&lt;Enrollment&lt;'a&gt;&gt;,
+}
+
+impl&lt;'a&gt; School&lt;'a&gt; {
+    fn new() -&gt; School&lt;'a&gt; {
+        School {
+            enrollments: Vec::new(),
+        }
+    }
+    
+    fn enroll(&amp;mut self, pupil: &amp;'a Person, class: &amp;'a Class) {
+        self.enrollments.push(Enrollment::new(pupil, class));
+    }
+}
+
+fn main() {
+    let jack = Person::new(&quot;Jack&quot;);
+    let jill = Person::new(&quot;Jill&quot;);
+    let teacher = Person::new(&quot;John&quot;);
+    
+    let borrow_chk_class = Class::new(&amp;teacher);
+    
+    let mut school = School::new();
+    school.enroll(&amp;jack, &amp;borrow_chk_class);
+    school.enroll(&amp;jill, &amp;borrow_chk_class);
+}
+</code></pre>
+<p>This is a better design, in any way. There is no reason a person should know which class they are in,
+nor should a class know which people are enrolled in it. Should they need this information, they
+can obtain it from the list of enrollments.</p>
+<h2>Closing notes</h2>
+<p>In case you don't really understand why the rules of the borrow checker are the way they are, <a href="https://www.reddit.com/r/rust/comments/5ny09j/tips_to_not_fight_the_borrow_checker/dcf9zdv/">this explanation</a> by redditor /u/Fylwind might help:</p>
+<blockquote>
+<p>I like to think of the borrow checker has a kind of locking system (read-write-lock). If you have an immutable reference, you basically have a shared lock to the original object, whereas if you have a mutable reference you have an exclusive lock to it. And, like any locking system, it's usually not a good idea to hold on to them any longer than necessary. This is especially bad for mut refs.</p>
+<ul>
+<li>Some code can be restructured to avoid overlapping locks. This is usually the ideal solution, but it isn't always possible nor always elegant.</li>
+<li>If you run into issues where you want to mutate things but also want to share the reference all over the place, then Cell and RefCell come in handy. But be aware that it is just punting the locking system to run time. Violations of the exclusive-write rule will lead to panics.</li>
+<li>If that still doesn't work (usually with things like self-referential graph like structures), you can emulate references using indices to an array, or equivalently use Arena or TypedArena.
+If you have a specific problem in mind it'd be useful to ask that and see what folks here can come up with. Sometimes all you need is a little hint in the right direction and the rest will follow :P</li>
+</ul>
+</blockquote>
+<p>Finally, while the borrow checker is not infallible, and while you might fight it at first, once you
+learn to work with it, you will also learn to love it.</p>
+<p><a href="https://www.reddit.com/r/rust/comments/5obein/fighting_the_borrow_checker/?st=iy0c6abc&amp;sh=d90d52b3">Discuss this post on Reddit.</a></p>
+
+</section>
+
+<script src="../scripts/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>

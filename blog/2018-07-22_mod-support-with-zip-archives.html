@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - Mod support with ZIP archives</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>Mod support with ZIP archives</h1>
+    <p class="post-preview-date">22 July 2018</p>
+    <p>In this blog post, we will go over an ingenious system used in some of the older games created by id Software,
+in particular Quake 3: Arena, that made it very easy to create mods. The same system was used in games derived
+from the idTech 3 engine, such as Call of Duty 4: Modern Warfare. We will also discuss how you can implement it in your own
+game engine.</p>
+<p>This blog post contains no new ideas, but this concept is so great that I felt like I had to discuss it.</p>
+<h2>Overview</h2>
+<p>The system is very simple, but very powerful. All game data is stored in ZIP archives.
+At launch, you have for example a single archive, called <code>dat0.zip</code>. This archive contains the assets needed to run your game,
+such as textures, sounds, levels, etcetera.</p>
+<p>Now let's say you want to release some new levels in a patch. You could update <code>dat0.zip</code>, but then your users would
+have to redownload the entire archive. No, let's create a new archive. We'll call it <code>dat1.zip</code>. This archive only contains
+the new levels.</p>
+<p>The requirements for your game engine right now are that it should scan all archives, and load data from all archives.</p>
+<p>Nothing special, right? But here is where this system becomes really powerful. What if you want to release a HD texture pack?</p>
+<p>It's very simple! Add another archive, call it <code>dat2.zip</code>, and fill it with HD textures with <em>the same file names</em> as the regular textures. Then have your engine always use the assets from the archive that has the greatest name alphabetically.</p>
+<p>In other words, if a file exists in archive A and B, then the file should be loaded from B, because B comes last.</p>
+<h2>Benefits</h2>
+<p>This system is very simple and has quite a bit of benefits:</p>
+<ul>
+<li>It makes patching easy.</li>
+<li>It reduces patch file size, as users only need to download the updated files.</li>
+<li>It allows modders to create and distribute mods easily, and users to install and delete mods even more easily.</li>
+<li>Decompressing a file in memory can be faster than reading the file from disk.</li>
+</ul>
+<h3>Modding</h3>
+<p>Let's discuss that last point.</p>
+<p>Let's say you want to make it possible for modders to create new game modes. Simple! Define your game modes in a script,
+package it up into an archive, and then modders can overwrite that same script file to add their own game mode.</p>
+<p>With this method, it is also possible to create total conversion mods: modders can simply create a new archive, and your game
+executable will run the archive as is. Basically, your game engine becomes a simple tool that executes what is in the archive.</p>
+<p>This system becomes very powerful if you use a scripting language, such as Lua, to drive your game logic!</p>
+<h2>Caveats</h2>
+<p>If you do use a scripting language, make sure that it is properly sandboxed. You don't want users installing mods that
+can e.g. access the file system. The only thing that game scripts can do should be concerned with the game itself.</p>
+<h2>Implementation</h2>
+<p>How do you implement this? It is actually very easy! Let's go over some code fragments that indicate how to implement such a system.</p>
+<p>In these examples, we will use <a href="https://github.com/richgel999/miniz">miniz</a>, a great and small library for reading files from ZIP archives.</p>
+<p>We will also ignore most error handling and parts that have no relation to the usage of miniz, such as
+creating a mapping from files to archives. The examples are written in ANSI C.</p>
+<h3>Collecting locations of files</h3>
+<p>The first thing to do is to find the most up to date version of a file from an archive. We can do this by going over
+all of the ZIP archives in our data folder, and storing mappings from file names to archives.</p>
+<pre><code class="language-c">DIR *dirFile = opendir(archive_path); // archive_path is the path to the directory containing all ZIP archives
+if (dirFile != NULL)
+{
+    struct dirent *handle;
+    while ((handle = readdir(dirFile)) != NULL)
+    {
+        // Ignore hidden files, current and parent directories
+        if (handle-&gt;d_name[0] == '.')
+        {
+            continue;
+        }
+
+        if (strstr(handle-&gt;d_name, &quot;.zip&quot;))
+        {
+            int i;
+            char *archive_absolute_path = malloc((strlen(handle-&gt;d_name) + strlen(archive_path) + 1) * sizeof(char));
+            // We have found an archive, now we will collect the files in this archive.
+            mz_zip_archive archive = {0};
+
+            sprintf(archive_absolute_path, &quot;%s/%s&quot;, archive_path, handle-&gt;d_name);
+
+            mz_bool status = mz_zip_reader_init_file(&amp;archive, archive_absolute_path, 0);
+            if (!status)
+            {
+                continue; // Handle error!
+            }
+
+            for (i = 0; i &lt; (int)mz_zip_reader_get_num_files(&amp;archive); i++)
+            {
+                mz_zip_archive_file_stat file_stat;
+                if (!mz_zip_reader_file_stat(&amp;archive, i, &amp;file_stat))
+                {
+                    continue; // Handle error!
+                }
+
+                // We can't &quot;open&quot; a directory, so just skip them
+                if (!file_stat.m_is_directory)
+                {
+                    // TODO: Create a new mapping if `archive_absolute_path` is greater than the current mapping (or if there is no current mapping).
+                }
+            }
+
+            mz_zip_reader_end(&amp;archive);
+            free(archive_absolute_path);
+        }
+    }
+}
+</code></pre>
+<h3>Opening files</h3>
+<p>Having collected these archives, you can now use them as a read-only file system. When your engine wishes to open a file,
+it can use the <code>mz_zip_reader_extract_file_to_heap</code> function to extract the file contents as a <code>void*</code>.</p>
+<p>First, you find the correct archive from the mapping, and then you simply call the above function.</p>
+<pre><code class="language-c">void *contents = mz_zip_reader_extract_file_to_heap(&amp;archive, filename, size, 0);
+</code></pre>
+<p>It's as easy as this!</p>
+<h3>Handling memory</h3>
+<p>What you do <strong>not</strong> want to do is reopen the archive every time you want to read a file. Decompressing files is much faster
+than accessing the file system, so you want to keep archives in memory for subsequent file reads. However, you should
+also make sure to not keep all archives open as once, as this will quickly fill your RAM. Monitor the memory used by the
+archives and close the least recently used (LRU) archives if needed. In short: <em>handle open archives as a file system cache</em>.</p>
+<h2>Use cases</h2>
+<p>You might not want to use such a system for an open world game. Streaming assets is not really supported through this system as is, and it is better suited to games like Quake 3: Arena, where levels are clearly separated from one another.</p>
+<h2>Conclusion</h2>
+<p>This system is very simple to implement and still works after more than 20 years. You can patch easily, have good performance when loading your assets, and support mods all by implementing a system in one or two work days.</p>
+<p>What are your thoughts? You can discuss this post <a href="https://www.reddit.com/r/gamedev/comments/90wvg2/mod_support_with_zip_archives/">on Reddit</a>.</p>
+
+</section>
+
+<script src="../scripts/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>
