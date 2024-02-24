@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - Post-mortem: that time I created a DSL for grading student projects</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>Post-mortem: that time I created a DSL for grading student projects</h1>
+    <p class="post-preview-date">24 February 2024</p>
+    <p>In an academic setting, we aim to grade student projects as objectively as possible. In the Master of Computer Science Engineering program at Ghent University, the machine learning course traditionally featured a significant project component contributing to the final grade. Throughout the course, students delivered three interim presentations, each evaluated by three assessors: the professor and two teaching assistants (TAs). To ensure consistency and fairness, we implemented a rubric system where assessors delineated specific criteria. To streamline the assessment process, we automated the process using a custom built tool, which also included a Domain Specific Language (DSL).</p>
+<p><img src="../assets/themis.jpg" alt="img" />
+<em>The grading tool was aptly named after the ancient Greek goddess of justice, Themis (here, envisioned by Bing Copilot Designer).</em></p>
+<p>To enhance efficiency during live grading sessions and eliminate the need for manual data entry, I created a web application. This application leverages a Spring and PostgreSQL backend (utilizing Hibernate ORM) alongside an Angular frontend. These technologies were chosen based on my familiarity with them as a software engineer. The interface allows for project creation and rubric setup, empowering assessors to efficiently evaluate student work during presentations. For instance:</p>
+<p><img src="../assets/themis_rubric.png" alt="img" /></p>
+<p>After grading, a score overview for the different groups is automatically generated. This score overview is generated based on the criteria that the evaluators have selected.
+The professor and TAs assigned weights to every criterion a priori.</p>
+<p>Following assessment, an automatic score overview for different student groups is generated according to the predefined criteria and weights assigned by the professor and TAs.</p>
+<p>In cases where the default weighted sum of scores proved inadequate, a script could be devised to compute scores using an alternative formula. We opted for a straightforward arithmetic language due to constraints, such as limited resources on the VM running the web application. A sample script might resemble:</p>
+<pre><code>c1r1 = [Validation approach/Splitting and validation]
+c1r2 = [Validation approach/Avoid data leakage]
+c1 = 2 * $c1r1 + 1 * $c1r2
+1 * $c1
+</code></pre>
+<p>When we run this script for a group, it first extracts the values for the criteria &quot;Splitting and validation&quot; and &quot;Avoid data leakage&quot; into two variables.
+The values in these variables correspond to the a priori weights for each tick box that grades could select. For example, if the students did not account for data leakage,
+the value of <code>$c1r2</code> could be <code>0</code>, indicating that they did not get a score for that criterion.
+In the above example, setting up a correct train-validate-test split is twice as important as accounting for data leakage, because <code>c1 = 2 * $c1r1 + 1 * $c1r2</code>.
+The final line in the script must be an expression that computes the final score for a group.</p>
+<p>This scripting language is implemented as an interpreted <a href="https://en.wikipedia.org/wiki/Stack-oriented_programming#:%7E:text=From%20this%2C%20the%20following%20can,atop%20the%20stack%2C%20termed%20pushing.">stack based language</a>, utilizing an ANTLR v4 grammar.
+Here is a small excerpt of the grammar</p>
+<pre><code>grammar ScoreArithmetic;
+
+file : line* expression EOF;
+
+line
+   : COMMENT
+   | assignment
+   ;
+
+assignment
+   : avariable '=' expression
+   ;
+</code></pre>
+<p>After computing the scores, an Excel spreadsheet was generated with the scores for every criterion, to allow for a final check of the score computations.
+We also checked the variance of the scores across assessors and if objectively true or false statements were graded consistently, re-evaluating student groups if required.
+Along with it, a PDF with feedback was generated. These files were created automatically with <code>iText</code>.</p>
+<p>Over the past several years, the course has changed and the Computer Science Engineering program has been redesigned. As a result, Themis is no longer used.</p>
+
+</section>
+
+<script src="../scripts/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>
