@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - Quality of Life with SSH</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>Quality of Life with SSH</h1>
+    <p class="post-preview-date">11 March 2025</p>
+    <p>As part of my day job, I've been working more than usually with SSH, working with remote connections to robots and creating SSH tunnels to handle (semi-)complex networking set-ups. I kept forgetting certain parts of my set-up every time I had to do this again, so I took some notes and decided to share them here.</p>
+<p>This post contains information on:</p>
+<ul>
+<li>How to safely use git on an SSH server with a shared user account (without sharing private keys with other people)</li>
+<li>How to set up an SSH tunnel</li>
+<li>How to use graphical applications that run on the remote server with X forwarding</li>
+</ul>
+<h2>The set-up</h2>
+<p>The robot set-up I most recently worked on has a router (we'll give it the hostname <code>router</code>) and a mini-PC connected to the router via ethernet (we'll give it the hostname <code>brain</code>, because it's where the robot application code is run.) We connect to <code>router</code> from our personal workstation over Wi-Fi. Let's assume everything is running Ubuntu 24.</p>
+<p><img src="../assets/ssh_diagram.svg" alt="diagram of setup" /></p>
+<p>Let's say <code>router</code> is at the address 10.10.120.1 and <code>brain</code> at 10.10.42.57 (on <code>router</code>'s network). We have an account <code>user</code> on both computers.</p>
+<h2>SSH configuration file</h2>
+<p>The first step is to set up an SSH configuration file, typically stored in <code>~/.ssh/config</code>.
+Let's set it up so that we can simply use the command <code>ssh router</code> instead of <code>ssh user@10.10.120.1</code>.</p>
+<pre><code class="language-bash">$ cat ~/.ssh/config
+Host router
+	Hostname 10.10.120.1
+	User user
+
+Host brain
+	Hostname 10.42.0.57
+	User user
+	ProxyJump router
+</code></pre>
+<p>Note that <code>brain</code> uses a <code>ProxyJump</code> via <code>router</code>, so that we can simply use <code>ssh brain</code> instead of having to go through the <code>router</code> manually.</p>
+<h2>Public-private key authentication</h2>
+<p>Right now, we always need to manually enter <code>user</code>'s password (and twice if we SSH into <code>brain</code>). Let's use keys to authenticate instead.
+To generate a new key pair, we can use:</p>
+<pre><code class="language-bash">$ ssh-keygen -t ed25519
+</code></pre>
+<p>We don't want to store our private key in plain text, so enter a passphrase. We also don't want to have to enter this passphrase every time we use our key, so let's add it to the SSH agent:</p>
+<pre><code class="language-bash">$ ssh-add ~/.ssh/id_ed25519
+</code></pre>
+<p>The remote server must know about our public key. We shouldn't just copy it over there, but use these commands to do this securely:</p>
+<pre><code class="language-bash">$ ssh-copy-id user@router
+$ ssh-copy-id user@brain
+</code></pre>
+<p>The keys will now be on the remote computers under <code>~/.ssh/authorized_keys</code>.</p>
+<p>Now we can enter <code>ssh brain</code> or <code>ssh router</code> and not have to enter any passphrases!</p>
+<h2>SSH tunneling</h2>
+<p>Let's say <code>brain</code> is running a service on some port, that we wish to connect to from our workstation directly. We can use an SSH tunnel for that.
+For example, we want to use ports 7000 and 7001 as if the service was running on our workstation.</p>
+<pre><code class="language-bash">$ ssh -N -L localhost:7000:brain:7000 -L localhost:7001:brain:7001 router
+</code></pre>
+<p><code>-N</code> suppresses the output, and we add <code>-L</code> for every port. This command should &quot;hang&quot;.</p>
+<p>Now we can go to <code>localhost:7000</code> (resp. <code>localhost:7001</code>) to access this service!</p>
+<p>I recommend turning this into an alias, e.g.,</p>
+<pre><code class="language-bash">$ alias tun_brain=&quot;ssh -N -L localhost:7000:brain:7000 -L localhost:7001:brain:7001 router&quot;
+</code></pre>
+<p>so we can just use</p>
+<pre><code class="language-bash">$ tun_brain
+</code></pre>
+<p>instead of remembering the tunnel command.</p>
+<h2>X forwarding</h2>
+<p>Let's say we want to run a graphical application on <code>brain</code> or <code>router</code> as if it were running on our own workstation. We can use X forwarding for that (assuming we're using X11 :).)</p>
+<pre><code class="language-bash">$ cat ~/.ssh/config
+Host router
+	Hostname 10.10.120.1
+	User user
+	ForwardX11 yes
+
+Host brain
+	Hostname 10.42.0.57
+	User user
+	ProxyJump router
+	ForwardX11 yes
+</code></pre>
+<p>Now we can run, e.g., <code>nautilus</code> and get a graphical file browser on <code>router</code> or <code>brain</code>. Not the most useful application, but useful for other applications such as <code>gnome-control-center</code> to change settings.</p>
+<h2>Using git over SSH, over SSH</h2>
+<p>Finally, we want to be able to use <code>git</code> on the remote servers. But, remember how we shared an account with other people? We can use the SSH agent to securely transfer our keys on demand.</p>
+<p>All we have to do is change our config again.</p>
+<pre><code class="language-bash">$ cat ~/.ssh/config
+Host router
+	Hostname 10.10.120.1
+	User user
+	ForwardX11 yes
+	ForwardAgent yes
+
+Host brain
+	Hostname 10.42.0.57
+	User user
+	ProxyJump router
+	ForwardAgent yes
+</code></pre>
+<p>Now we can use <code>git</code> on the remote computers without needing to store our private keys.</p>
+
+</section>
+
+<script src="../scripts/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>
