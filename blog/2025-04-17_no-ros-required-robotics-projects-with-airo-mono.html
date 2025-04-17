@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - No ROS required: robotics projects with airo-mono</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>Mathieu De Coster</h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h1>No ROS required: robotics projects with airo-mono</h1>
+    <p class="post-preview-date">17 April 2025</p>
+    <p>Many roboticists have a love-hate relationship with ROS, and this is understandable. Its ecosystem is great, and you'll find libraries for just about anything you want to do. But at the same time, the installation process can be cumbersome and performance can be lacking with the default settings. Better yet, many robotics projects can get by with just a single process - using ROS just adds additional complexity.</p>
+<p>At IDLab-AIRO, we have a custom codebase for robotics projects called <a href="https://github.com/airo-ugent/airo-mono">airo-mono</a>. This <a href="https://en.wikipedia.org/wiki/Monorepo">monorepo</a> contains Python code for controlling UR cobots, KELO Robile platforms, reading camera data, algebra, and more. This approach has proven to do what we want: be easy to set up and use. airo-mono also powered the <a href="https://airo.ugent.be/cloth_competition/">cloth unfolding competition at ICRA 2024</a> and is used for courses at Ghent University because of its ease of use.</p>
+<p>Recently, we've finally published to PyPI for the first time, simplifying the installation process of our Robotics packages. Now, combined with <a href="https://github.com/astral-sh/uv">uv</a>, it's trivially easy to set up new robotics projects. Sure, there are some limitations: we only support hardware that we have in our lab (such as UR cobots, Zed cameras and Realsense cameras). But, I've recently set up a new project for an upcoming demo, and it's been incredibly easy to start.</p>
+<p>This demo runs on a mobile platform which has a UR5e mounted on top. It uses <a href="https://github.com/airo-ugent/airo-ipc">airo-ipc</a>, our custom Inter-Process Communication framework, to read data from 7 sensors (including 4 RGBD cameras) at high frequencies and communicate them with low latency over shared memory.</p>
+<p>And, setting up the demo, was only a matter of:</p>
+<ol>
+<li>Cloning the repository</li>
+<li>Running <code>uv sync</code> to download and install dependencies (which is so fast that at first I thought it had failed)</li>
+<li>Running a launch script</li>
+</ol>
+<p>No need to install any external tools except for Python and uv, and our multi-process demo was already up and running in just a few minutes (most of which was spent downloading PyTorch wheels!) Here's a screenshot of an early test, showing <a href="https://rerun.io/">rerun</a> (which I highly recommend to anyone in the field).</p>
+<p><img src="../assets/202504_rerun.png" alt="img" /></p>
+<p>It took us some time to create a solid IPC framework, and it's still a work in progress, but now that we have it, it's almost trivial to set up new robotics projects. Without ROS, and with near-instant set-up times.</p>
+<p>There's never been a better time to try out airo-mono! Check it out <a href="https://github.com/airo-ugent/airo-mono">on GitHub</a> today!</p>
+
+</section>
+
+<script src="../scripts/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>
