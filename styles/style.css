@@ -72,6 +72,11 @@ h3 {
     padding-left: 0;
 }
 
+.publication-aside {
+    font-size: 0.85rem;
+    margin-top: 2px;
+}
+
 header {
     margin-top: 20px;
     margin-bottom: 50px;
