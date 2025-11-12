@@ -191,4 +191,6 @@ hr {
 
 mark {
     background-color: #eeeeee;
+    padding: 0.1em 0.2em;
+    border-radius: 0.3em;
 }
