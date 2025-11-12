@@ -49,14 +49,14 @@
     
     
 <section id="post">
-    <h1>Streamlining Robotics Projects: Why You Might Want to Try airo-mono</h1>
+    <h2>Streamlining Robotics Projects: Why You Might Want to Try airo-mono</h2>
     <p class="post-preview-date">17 April 2025</p>
     <p>In the world of robotics, the Robot Operating System (ROS) is both loved and hated. On one hand, its extensive ecosystem offers libraries for almost any task imaginable. On the other hand, installation can be a hassle, performance with default settings may be lacking, and for many projects, ROS can introduce unnecessary complexity when a single process would suffice.</p>
 <p>At IDLab-AIRO, we've developed an alternative that strikes a balance between functionality and ease of use. This is <a href="https://github.com/airo-ugent/airo-mono">airo-mono</a>, our custom codebase designed to simplify robotics projects. This monorepo contains Python code for controlling UR cobots, KELO Robile platforms, processing camera data, algebraic operations, and more. Our approach has proven to be efficient and user-friendly, making it an excellent choice for both research and educational purposes. In fact, airo-mono powered the <a href="https://airo.ugent.be/cloth_competition/">cloth unfolding competition at ICRA 2024</a> and is used in courses at Ghent University.</p>
-<h2>Easy Installation and Setup</h2>
+<h3>Easy Installation and Setup</h3>
 <p>We recently published airo-mono to PyPI for the first time, making the installation process a breeze. Combined with <a href="https://github.com/astral-sh/uv">uv</a>, setting up new robotics projects is now incredibly straightforward. While our current hardware support is limited to what we have in our lab (such as UR cobots, Zed cameras, and Realsense cameras), the simplicity and speed of setup are hard to beat.</p>
 <p>I recently set up a new project for an upcoming demo, and the process was impressively smooth. The demo runs on a mobile platform with a UR5e mounted on top, utilizing <a href="https://github.com/airo-ugent/airo-ipc">airo-ipc</a>, our custom Inter-Process Communication framework. This framework reads data from seven sensors, including four RGBD cameras, at high frequencies and communicates them with low latency over shared memory.</p>
-<h2>Setting Up the Demo</h2>
+<h3>Setting Up the Demo</h3>
 <p>Getting the demo up and running was as simple as:</p>
 <ol>
 <li>Cloning the repository</li>

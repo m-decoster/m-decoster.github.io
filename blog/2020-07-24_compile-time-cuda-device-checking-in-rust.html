@@ -49,7 +49,7 @@
     
     
 <section id="post">
-    <h1>Compile time CUDA device checking in Rust</h1>
+    <h2>Compile time CUDA device checking in Rust</h2>
     <p class="post-preview-date">24 July 2020</p>
     <p>Stable <a href="https://www.rust-lang.org/">Rust</a> is <a href="https://without.boats/blog/shipping-const-generics/">soon</a> getting const generics.
 Let's look at how const generics can be used to avoid a certain bug at compile time. The bug?
@@ -63,7 +63,7 @@ However, you can actually find and avoid these bugs at compile time with const g
 <p>For this experiment, I am going to use the Rust programming language. Specifically,
 I will be using the <a href="https://github.com/LaurentMazare/tch-rs">tch-rs</a> bindings to libtorch. This allows writing
 code that is quite similar to PyTorch, but in Rust.</p>
-<h2>The Problem</h2>
+<h3>The Problem</h3>
 <p>In deep learning, we work with high dimensional data represented as <a href="https://en.wikipedia.org/wiki/Tensor">tensors</a>. PyTorch allows you to easily perform calculations on these tensors on multiple GPUs in parallel.
 You can explicitly move data to a different device by calling <code>.to(device)</code> on a tensor.
 <code>device</code> is a string: <code>&quot;cpu&quot;</code> or <code>&quot;cuda&quot;</code>, or <code>&quot;cuda:X&quot;</code> for a specific CUDA device at index <code>X</code>.</p>
@@ -90,14 +90,14 @@ result = tensor_1 + tensor_2  # ???
 <p>Or if we try to add a tensor on CUDA:0 and another on CUDA:1, we get:</p>
 <pre><code>RuntimeError: binary_op(): expected both inputs to be on same device, but input a is on cuda:0 and input b is on cuda:1
 </code></pre>
-<h3>Equivalent code in Rust</h3>
+<h4>Equivalent code in Rust</h4>
 <p>Here is the equivalent code in Rust (using tch-rs) for the failing example:</p>
 <pre><code class="language-rust">let tensor_1 = tch::Tensor::randn(&amp;[2, 3], (Kind::Float, Device::Cpu)); // On CPU
 let tensor_2 = tch::Tensor::randn(&amp;[2, 3], (Kind::Float, Device::Cuda(0)); // On CUDA:0
 let result = &amp;tensor_1 + &amp;tensor_2; // ???
 </code></pre>
 <p>Note how we do mark the device in the code, but it is not checked at compile time. We are going to use const generics to do this.</p>
-<h2>Const Generics</h2>
+<h3>Const Generics</h3>
 <p>Const generics (<a href="https://github.com/rust-lang/rfcs/blob/master/text/2000-const-generics.md">RFC</a>) are a feature of the Rust programming language which allows using constant values in type signatures.
 Why do we need these? Well, let's say we are writing a wrapper <code>DeviceTensor</code> around the <code>Tensor</code> struct from tch-rs,
 with an added generic parameter <code>D</code>, which indicates the device.</p>
@@ -107,7 +107,7 @@ device. We could write <code>DeviceTensor&lt;Cpu&gt;</code> and <code>DeviceTens
 types, <code>Cuda0</code>, <code>Cuda1</code>, etcetera. However, that does not scale.</p>
 <p>The const generics feature allows us to use <code>const</code> (constant) parameters in our type annotations.
 Since integer constants match that description, we can express our device as <code>Cuda&lt;N&gt;</code>, where <code>N</code> is an integer.</p>
-<h2>The Solution</h2>
+<h3>The Solution</h3>
 <p>To solve the above problem, we will create a struct that is generic over the device on which the internal data
 in that struct lives.</p>
 <pre><code class="language-rust">pub struct DeviceTensor&lt;D&gt; where D: Device {
@@ -210,7 +210,7 @@ pub fn to_device&lt;D2: Device&gt;(self) -&gt; DeviceTensor&lt;D2&gt; {
 <p>Note how <code>to_device</code> takes a <code>self</code> parameter. This means that the ownership of the tensor <code>tensor_2</code> is passed to the function. At the end of the function, <code>self</code> goes out of scope and is dropped. This means that <code>tensor_2</code> can no longer be used after calling <code>to_device</code> on it. Perfect, because its type parameter doesn't
 match the device anymore.
 This extra guarantee of our model for <code>DeviceTensor</code>s we get for free thanks to Rust's ownership model.</p>
-<h2>Conclusion</h2>
+<h3>Conclusion</h3>
 <p>We've seen an example use case for const generics. We've avoided a small bug in PyTorch code
 using const generics, Rust's type system, and its ownership model.</p>
 <p>Are these compile-time guarantees great enough that you should drop Python for deep learning and move straight to Rust?

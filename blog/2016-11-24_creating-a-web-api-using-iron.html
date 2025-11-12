@@ -49,7 +49,7 @@
     
     
 <section id="post">
-    <h1>Creating a web API using Iron</h1>
+    <h2>Creating a web API using Iron</h2>
     <p class="post-preview-date">24 November 2016</p>
     <p><em>The following is a word-for-word copy of a tutorial I wrote in November of 2016. The original tutorial can be found <a href="https://github.com/m-decoster/iron-example">on my GitHub page</a>.</em></p>
 <p>In this tutorial, we will be looking at how to use <a href="http://ironframework.io">Iron</a> to create a web API.<br />
@@ -59,11 +59,11 @@ posts can be opened individually or shown in a feed chronologically.</p>
 <p>This tutorial starts from a complete project and explains the different parts
 of the project. After finishing this tutorial, you should have a basic understanding of how
 an Iron application is constructed and how to create your own, more complicated, web applications. </p>
-<h2>Getting started</h2>
+<h3>Getting started</h3>
 <p>You should start now by creating a new binary project:</p>
 <pre><code>cargo new --bin mywebapi
 </code></pre>
-<h2>Cargo dependencies</h2>
+<h3>Cargo dependencies</h3>
 <p>You should have following dependencies in your <code>Cargo.toml</code> file:</p>
 <pre><code>[dependencies]
 iron = &quot;0.4&quot;
@@ -78,7 +78,7 @@ uuid = { version = &quot;0.2&quot;, features = [&quot;v4&quot;, &quot;rustc-seri
 <code>rustc-serialize</code> allows us to serialize structs to JSON on Stable Rust. <code>chrono</code> provides us with an interface
 for date and time representations that works easily with <code>rustc-serialize</code>. Finally, we use <code>uuid</code> to be able
 to generate unique ids for posts.</p>
-<h2>Modeling our data</h2>
+<h3>Modeling our data</h3>
 <p>We will be modeling posts which have the following properties:</p>
 <ul>
 <li>A summary or a short title</li>
@@ -137,7 +137,7 @@ impl Author {
 reserve this for the future. Most of the above code should be fairly self explanatory.
 Deriving <code>RustcEncodable</code> and <code>RustcDecodable</code> allows us to have the <code>rustc-serialize</code> library
 automatically encode and decode objects to and from JSON.</p>
-<h2>Saving our data</h2>
+<h3>Saving our data</h3>
 <p>For this tutorial, a real database would be out of scope. That's why we are going to store everything
 in memory instead. Our database will be a simple <code>Vec&lt;Post&gt;</code> that is available in all of our web handlers.
 We will be able to add posts to this database, or get all the posts from the database.</p>
@@ -163,7 +163,7 @@ impl Database {
     }
 }
 </code></pre>
-<h2>Handling HTTP requests</h2>
+<h3>Handling HTTP requests</h3>
 <p>Now that we've defined our data and a simple in-memory data store, we will be looking
 at the meat of the application: handling the actual web requests.</p>
 <p>Start by creating a file <code>handlers.rs</code>. We will need the following <code>use</code> statements:</p>
@@ -178,7 +178,7 @@ use router::Router;
 use model::Post;
 use std::error::Error;
 </code></pre>
-<h3>Macros</h3>
+<h4>Macros</h4>
 <p>A lot of code has to deal with JSON encoding and decoding, mutexes or getting parameters from
 an HTTP request. That is why we will be creating three macros:</p>
 <ul>
@@ -233,7 +233,7 @@ went wrong, so we return <code>InternalServerError</code>. If we cannot find the
 the users have sent a <code>BadRequest</code>.</p>
 <p>So far, this is all fairly simple. These macros will make our lives a lot easier when writing the actual
 request handlers.</p>
-<h3>Request handlers</h3>
+<h4>Request handlers</h4>
 <p>Now, let's have a look at the actual handlers. We will first create a struct
 that will contain all handlers:</p>
 <pre><code class="language-rust">pub struct Handlers {
@@ -262,7 +262,7 @@ Why is this? Well, we need the following features for our data store:</p>
 </ul>
 <p>In case you don't know what <code>Arc</code> or <code>Mutex</code> are, you should have a look at the excellent sections
 on them in the <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html">Rust documentation</a>.</p>
-<h4>Feed handler</h4>
+<h5>Feed handler</h5>
 <p>Let's start with the easiest handler: the one that returns a list of all posts.</p>
 <pre><code class="language-rust">pub struct FeedHandler {
     database: Arc&lt;Mutex&lt;Database&gt;&gt;,
@@ -298,7 +298,7 @@ obtain the posts, encode this as a JSON list and send this with <code>HTTP 200 O
 }
 </code></pre>
 <p>As you can see, the macros do make this code a lot more clear.</p>
-<h4>Make post handler</h4>
+<h5>Make post handler</h5>
 <p>Now let's allow users to create posts.</p>
 <pre><code class="language-rust">pub struct MakePostHandler {
     database: Arc&lt;Mutex&lt;Database&gt;&gt;,
@@ -327,7 +327,7 @@ impl Handler for MakePostHandler {
 this is the data we are sending with the HTTP POST request. Then, we try to
 decode the payload into a <code>Post</code> object, returning a <code>BadRequest</code> if the JSON is malformed.</p>
 <p>Next, we add the post to the database and return 201 Created along with the original payload.</p>
-<h4>Post handler</h4>
+<h5>Post handler</h5>
 <p>We also want to be able to view individual posts. For this, we need to have a URL parameter.
 The handler looks like this:</p>
 <pre><code class="language-rust">pub struct PostHandler {
@@ -370,7 +370,7 @@ it tries to parse it to the UUID. If it is malformed, we return 400 Bad Request.
 <p>Finally, if we find a post, we encode it and return it with 200 OK. If we don't find it,
 we return 404 Not Found.</p>
 <p>Great! We have now defined all of our handlers. Only one thing remains to be done in this file.</p>
-<h3>Middleware</h3>
+<h4>Middleware</h4>
 <p>Iron uses middleware. Middleware can be either BeforeMiddleware, AroundMiddleware or AfterMiddleware.</p>
 <p>BeforeMiddleware can modify requests before they are handled, AroundMiddleware before and after and
 AfterMiddleware after they are handled but before the response is sent.</p>
@@ -386,7 +386,7 @@ impl AfterMiddleware for JsonAfterMiddleware {
 }
 </code></pre>
 <p>We simply update the headers on the response, and we're done.</p>
-<h2>Putting it all together</h2>
+<h3>Putting it all together</h3>
 <p>We have now defined all of the code that is needed for our data, data store and handlers.</p>
 <p>Now it is time to put everything together and have a running web application.</p>
 <p>We should start by defining all of the external crates, models, and adding our <code>use</code> statements.</p>
@@ -475,7 +475,7 @@ chain.link_after(logger_after); // Should be last!
 <li>To look at a specific post, find its id in the feed and then use <code>curl -v localhost:3000/post/&lt;id&gt;</code></li>
 <li>To create a new post, make sure you get the JSON syntax right and then use <code>curl -v --data '&lt;json&gt;' localhost:3000/post</code></li>
 </ul>
-<h2>Where to go from here</h2>
+<h3>Where to go from here</h3>
 <p>You now have a working web application. It does not do much, however. Things you can do are:</p>
 <ul>
 <li>Have a look at the libraries provided by the Iron team (<a href="https://github.com/iron-graveyard/common">Iron Common</a>)</li>

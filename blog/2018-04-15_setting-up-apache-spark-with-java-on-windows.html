@@ -49,7 +49,7 @@
     
     
 <section id="post">
-    <h1>Setting up Apache Spark with Java on Windows</h1>
+    <h2>Setting up Apache Spark with Java on Windows</h2>
     <p class="post-preview-date">15 April 2018</p>
     <p>Setting up Spark for use in Java in Windows is fairly easy if you know what to do. I will take you through the steps needed here.</p>
 <p>We will use the following technologies, which you should already have installed and set up:</p>
@@ -60,14 +60,14 @@
 </ul>
 <p>You should know how to work with Maven.</p>
 <p>My set up uses the <code>D:</code> volume, but you should be able to substitute it for <code>C:</code> if you prefer.</p>
-<h2>Installing Spark</h2>
+<h3>Installing Spark</h3>
 <p>First, you need to download and install Apache Spark.
 Go to <a href="https://archive.apache.org/dist/spark/spark-2.0.0">this page</a> and download the archive named
 <code>spark-2.0.0-bin-hadoop2.7.tgz</code>.</p>
 <p>Extract the archive to <code>D:\spark</code> such that you now have the folders <code>D:\spark\bin</code> etcetera.</p>
 <p>Now download <a href="https://codeload.github.com/srccodes/hadoop-common-2.2.0-bin/zip/master">Hadoop</a>. Copy
 <code>bin\winutils.exe</code> to the <code>D:\spark\bin</code> folder.</p>
-<h3>Environment variables</h3>
+<h4>Environment variables</h4>
 <p>Go to your system's environment variables by typing &quot;environment variables&quot; in the Start menu and selecting &quot;Edit the system environment variables&quot;.
 Add two new variables under the &quot;user variables&quot; section:</p>
 <ul>
@@ -80,10 +80,10 @@ Add two new variables under the &quot;user variables&quot; section:</p>
 <li><code>%SPARK_HOME%</code></li>
 </ul>
 <p>Close all windows by clicking &quot;OK&quot;.</p>
-<h3>Testing the installation</h3>
+<h4>Testing the installation</h4>
 <p>Open a command prompt (Windows+R, enter <code>cmd</code> and press the Return key) and execute <code>spark-shell.cmd</code>. This should launch the Spark shell
 and among other things print the Spark logo as ASCII art.</p>
-<h2>Setting up a Maven project</h2>
+<h3>Setting up a Maven project</h3>
 <p>Now we will create a Maven project so that we can use Spark from Java.
 Create a new Maven project with the quickstart archetype <code>maven-archetype-quickstart</code>. In IntelliJ you can do this through
 File &gt; New &gt; Project... and selecting Maven in the list, then checking &quot;Create from archetype&quot; and selecting the quickstart prototype.</p>
@@ -115,7 +115,7 @@ File &gt; New &gt; Project... and selecting Maven in the list, then checking &qu
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 </code></pre>
-<h3>Java</h3>
+<h4>Java</h4>
 <p>Now edit the <code>App.java</code> file that was created by the Maven archetype and enter this code below the <code>package</code> statement:</p>
 <pre><code class="language-java">import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;

@@ -48,13 +48,30 @@ html {
     width: calc(100vw - 34px);
 }
 
-
-h3 {
+#post h1,
+#post h2,
+#post h3,
+#post h4,
+#post h5,
+#post h6 {
     margin-top: 20px;
     margin-bottom: 1px;
 }
 
-h3 + p {
+.post-preview h2 {
+    margin-bottom: 1px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    line-height: initial;
+}
+
+#post h1 + p,
+#post h2 + p,
+#post h3 + p,
+#post h4 + p,
+#post h5 + p,
+#post h6 + p {
   margin-top: 0.1em;
 }
 
@@ -215,6 +232,6 @@ mark {
     border-radius: 0.3em;
 }
 
-code {
+pre {
     font-size: small;
 }
