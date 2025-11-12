@@ -36,7 +36,7 @@ body {
     color: var(--text-color);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
     body {
         margin-left: 20px;
     }
@@ -46,6 +46,15 @@ body {
    https://stackoverflow.com/a/25981719/2221461 */
 html {
     width: calc(100vw - 34px);
+}
+
+header {
+    h1 span#firstname {
+        color: var(--link-color);
+    }
+    h1 span {
+        display: block;
+    }
 }
 
 #post h1,
