@@ -244,3 +244,11 @@ mark {
 pre {
     font-size: small;
 }
+
+@media (min-width: 700px) {
+    .publication {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        column-gap: 1em;
+    }
+}
