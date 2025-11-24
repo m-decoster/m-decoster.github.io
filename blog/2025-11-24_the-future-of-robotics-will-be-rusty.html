@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - The future of robotics will be Rusty</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>
+            <span id="firstname">Mathieu</span>
+            <span>De Coster</span>
+        </h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<section id="post">
+    <h2>The future of robotics will be Rusty</h2>
+    <p class="post-preview-date">24 November 2025</p>
+    <p>When we talk about deploying robots into people's homes (<a href="https://www.1x.tech/neo">they're coming</a>), reliability is a strict requirement. A household robot has to operate safely. At all times. This is why Rust is the ideal language for the future of robotics.</p>
+<p>Much of robotics today is prototyped in Python. Unsurprisingly so, because robotics has become more and more about integrating AI algorithms onto physical systems, which are typically written in Python as well. It's a language that's beloved by scientists for its ease of use, but it's inefficient. Most critically, Python applications struggle with real-time constraints and lack deterministic performance guarantees. Not to mention the dread the <a href="https://wiki.python.org/moin/GlobalInterpreterLock">GIL</a> instills. So, performance critical parts are (re-)written in C or C++, which brings its own challenges. Subtle pitfalls like undefined behavior, memory management traps, and race conditions in highly parallel code make large robotics codebases difficult to maintain. And worst of all, teams are left juggling two languages.</p>
+<p>Rust, designed as a safer systems programming language, is the ultimate choice for robotics. Its performance is on par with C++, but its strict safety guarantees eliminate entire classes of bugs at compile time. Sometimes you'll feel like you're <a href="https://mathieudecoster.com/blog/2017-01-16_fighting-the-borrow-checker.html">fighting the compiler</a>, but actually, it's helping you write correct code. It's one thing if some application on your PC crashes. But a robot's internal systems crashing? That might lead to physical harm. Rust enables low-level control, with predictable performance patterns, and with an enjoyable API. For nine years in a row, Rust has been voted the <a href="https://survey.stackoverflow.co/2025/technology/#admired-and-desired">most admired language</a> on Stack Overflow.</p>
+<p>The main things Rust brings to the table for robotics are its deterministic (but safe) memory model (there's no waiting for garbage collection, but also no use-after-free), its zero-cost abstractions, and the borrow-checker's compile-time concurrency safety.</p>
+<p>It's not just hobbyists that love the language. Larger companies and organisations are catching on too.
+In 2023, Microsoft announced that it was <a href="https://x.com/dwizzzleMSFT/status/1720134540822520268?s=20">doubling down on Rust</a>. <a href="https://source.android.com/docs/setup/build/rust/building-rust-modules/overview">Android supports Rust</a>. And Rust is the first non-C language to be supported by the <a href="https://docs.kernel.org/rust/index.html">Linux kernel</a>.</p>
+<p>Rust's also no stranger to the AI space. <a href="https://huggingface.co/docs/tokenizers/en/index">HuggingFace Tokenizers</a> is written in Rust, and they also have an <a href="https://github.com/huggingface/candle">ML framework, Candle</a>. Writing the whole stack in one language is ergonomic. Do you really want to write AI inference code or high-level robot logic in C++? Do you want to write 500 Hz control loops in Python? Rust can easily handle both.</p>
+<p>With libraries such as <a href="https://github.com/eclipse-iceoryx/iceoryx2">iceoryx2</a> for inter-process communication, <a href="https://rerun.io">rerun</a> for visualisation and logging, and <a href="https://github.com/copper-project/copper-rs">Copper</a> for robotics runtimes, the future for Rust in robotics looks bright. Even though the <a href="https://robotics.rs/">ecosystem</a> is not fully there yet, I foresee it growing rapidly in the near future. Knowing Rust will become an asset for roboticists.</p>
+
+</section>
+
+<script src="../scripts/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>
