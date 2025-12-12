@@ -277,7 +277,7 @@ pre {
 }
 
 .project-card a {
-    color: black;
+    color: var(--text-color);
 }
 
 .project-card-contents {
