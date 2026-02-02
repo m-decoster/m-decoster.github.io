@@ -220,6 +220,11 @@ blockquote {
     margin: 0 auto;
 }
 
+figcaption {
+    display: table;
+    margin: 0 auto;
+}
+
 /* Footnote section */
 hr {
     border: 0;
@@ -289,7 +294,6 @@ pre {
 .project-card-contents h3 {
     margin-top: 0em;
     color:var(--link-color);
-    
 }
 
 .project-card-contents p {

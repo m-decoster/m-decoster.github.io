@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - Clear Communication: Making a Point with Graphs</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>
+            <span id="firstname">Mathieu</span>
+            <span>De Coster</span>
+        </h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../projects.html">Projects</a>
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<article id="post">
+    <h2>Clear Communication: Making a Point with Graphs</h2>
+    <p class="post-preview-date">17 December 2025</p>
+    <p>In this post, I will present ten guidelines for creating better graphs. We'll very briefly explore the differences between graphs used for presentations versus those used for data analysis, and then build toward a final, high-quality visualisation.</p>
+<p>These guidelines are based on my personal experience and preferences, which have for a large part been shaped by <a href="https://www.principiae.be/">the teachings of Jean-luc Doumont</a>. I'm sharing them here because making clear graphs doesn't have to be difficult. It can be easy, and make your story that much more powerful.</p>
+<p>These are guidelines, not rules. Use your own best judgment and develop your own style. These ideas aren't revolutionary either. But they can be helpful, and perhaps you are one of the <a href="https://xkcd.com/1053/">lucky ten thousand</a>.</p>
+<p>To be clear, we're not discussing graphs for data analysis. When you are exploring your data, you want to visualise it in many different ways to uncover patterns and see what the data reveals.</p>
+<p>Instead, we're focusing on graphs for presentations or papers. In this context, the goal of your graph is not to find patterns, but to communicate a message. Once you've completed your analysis and you have a story to tell, you can use these ten guidelines to create your final graph. Let's get started.</p>
+<h3>1. Figure out your message.</h3>
+<p>Maybe you guessed this one. Yes, the first step is to figure out what message you are trying to tell. This not only influences what kind of graph you'll be making, but also your axes, labels, and even colours. If you don't have a clear story to tell, don't make the graph. Every visualisation in a paper or presentation must have a clear purpose.</p>
+<p>The graph should make the message immediately clear. Consider putting the message verbatim in the title! Too often, an audience must first parse <em>how</em> the data is being shown before they can – hopefully – figure out <em>what</em> you are trying to tell them. By making the message central, it is immediately clear and the audience can use the graph to validate your claim.</p>
+<p>If interpreting your graph requires verbal instructions (e.g., &quot;compare the third green bar with the second red bar&quot;), the visual encoding may not be well aligned with the comparison you want to emphasise.</p>
+<h3>2. Pick the right type of plot.</h3>
+<p>There is a large amount of graph types to choose from. Even the smallest difference, like a bar plot versus a column plot, can have a large impact on how your message is perceived.</p>
+<p>Often, you can stick with the basics: scatter plots, line plots, bar plots, and box plots. Which one of these you pick, depends on how you want to present your data.</p>
+<ul>
+<li>Do you want to show individual data points? Use a scatter plot.</li>
+<li>Do you want to indicate a trend? A line plot does that quite well.</li>
+<li>Do you want to compare counts of categories? Bar plots help sell your story.</li>
+<li>Do you want to report on statistics instead of data points? A box plot can help. Although – you should consider a violin plot instead: <a href="https://datascience.stackexchange.com/a/92815">it's better at showing the underlying distribution</a>.</li>
+</ul>
+<p>These are indeed just the basics, and there's more to choose from. For example, what if you want to show a data distribution, but also individual data points? Consider a <a href="https://seaborn.pydata.org/generated/seaborn.swarmplot.html">swarm plot</a>!</p>
+<p>I won't go beyond the basics here. You can do a lot with just these types. But, take a look at <a href="https://datavizproject.com/#">the Data Viz Project</a>. This website is a true treasure if you're looking for the right type of graph. Their page &quot;<a href="https://100.datavizproject.com/">1 dataset 100 visualisations</a>&quot; shows just what you can do with all these graphs. I'm not a fan of all of them – for example I think <a href="https://100.datavizproject.com/data-type/viz22/">this curvy line</a> is too distracting – but it's a good source of inspiration.</p>
+<h3>3. Choose a colour scheme. Stick with it.</h3>
+<p>I am by no means versed in colour theory, but I <em>can</em> tell you about the importance of picking a colour scheme and sticking with it.</p>
+<p>The bare minimum is of course one colour. Quite often, this can be enough (but maybe a bit boring). To start with, use black for everything but the data: axes, ticks, and labels.</p>
+<p>Then, the remainder depends on how many categories you are plotting. A single category? You could use black again. You could also pick a <em>primary colour</em>. It can be a colour you like, or if you're presenting for a company it can be the brand's colour. For instance, when I create figures or slides for the <a href="https://airo.ugent.be">IDLab-AIRO</a> research team, I source my colour scheme from the <a href="https://airo.ugent.be/assets/img/airo.jpg">logo</a> – the <span style="color: #6bb8a8">primary colour</span> being <code>#6bb8a8</code>, <span style="color: #f2be7e">secondary colour</span> being <code>#f2be7e</code>, and the <span style="color: #c64f55">tertiary colour</span> being <code>#c64f55</code>. But for personal projects, I use the colour scheme from this website – the <span style="color: #214cce">primary colour</span> being <code>#214cce</code> and the <span style="color: #e23d28">secondary colour</span> being <code>#e23d28</code>.</p>
+<p>If you have more than one category, you'll need a colour palette. There exist <a href="https://coolors.co/">generators</a> for these. Use them if you need to. What I recommend is that your second colour is opposite to your first (e.g., blue and orange) and is slightly lighter – so that it looks good in gray scale. If you need a third, try one that's orthogonal to the other two. Again, play with the lightness to ensure that the curves can be distinguished in grayscale.</p>
+<h3>4. Remove noise.</h3>
+<p>You should only draw things that carry information. This means drawing (almost) only the data, and removing superfluous decorations.</p>
+<p>Spines (the borders around your plot) are generally useless on the top and right hand sides.</p>
+<p>Don't overdo it with ticks: use the minimal amount that you can get away with. Maybe only show ticks at your data points instead of at a regular interval.</p>
+<p>Don't draw a grid. It rarely aligns with your data points anyway. If you need to connect axes to specific data points, draw a vertical line from the x-axis, and a horizontal line from the y-axis, to that specific data point.</p>
+<p>Don't choose an off-white background colour. Use white for maximum contrast. Note: <em>do</em> draw a white background rectangle: plots with transparent backgrounds are illegible in dark mode. (Disregard this if the background colour carries meaning.)</p>
+<p>Finally, consider removing the title if it adds nothing more than the caption already does. Only add a title if there is no caption and your figure is shown in isolation.</p>
+<p>In summary – imagine you have to pay for each dot of ink. Be parsimonious. <aside style="color: var(--sidenote-color); font-size: 0.75rem">(I learned what that word means while doing research for this blog post.)</aside></p>
+<h3>5. Try drawing it on paper first.</h3>
+<p>With graphing software, we start with a plot that has near everything: labels, axes, titles, colours, markers... and then, we have to remove all of that.
+Just like it can be difficult for your audience to see the data through the noise, it can be hard to spot what can be removed, and what should stay.</p>
+<p>If you find it difficult to remove noise, what can help is drawing your plot on paper first. On paper, you start with a blank canvas. The principle of least effort dictates that you won't add noise. You'll only add what's needed to make your point.</p>
+<h3>6. Use horizontal text.</h3>
+<p style="text-orientation: sideways; writing-mode: sideways-lr">Vertical text can be a literal pain to read.</p>
+<p>And still, the default in many plotting software libraries is to have the y-axis label be vertical. I'm sure you've personally turned your head at a graph before. Spare your readers the physiotherapy, and make all text horizontal.</p>
+<p>If you think it takes up too much space, use line breaks and right align your text. Then,</p>
+<div style="width: 40%">
+    <p style="font-weight: 300; text-orientation: sideways; writing-mode: sideways-lr">Pressure difference (Pa)</p>
+    becomes
+    <div style="font-weight: 300; text-align: right">Pressure<br/>difference<br/>(Pa)</div>
+</div>
+<p>Much better.</p>
+<h3>7. Label everything. <em>Everything</em>.</h3>
+<p>This should go without saying, but experience tells me otherwise. Far too often do I see charts that have unlabeled axes. Even if the title reads &quot;Power consumption over time&quot;, I'm going to need you to label the y-axis with &quot;Power consumption [W]&quot; and the x-axis with &quot;time [s]&quot;. This isn't noise. It's information.</p>
+<p>Again, it's all about <em>clear communication of your message</em>. All the time spent by the audience trying to understand <em>what</em> they're looking at, is time you could've spent making your point.</p>
+<h3>8. Be <span style="font-weight: 900; letter-spacing: 0.1rem;">bold</span>.</h3>
+<p>Use big enough fonts. Readers shouldn't have to pry their eyes at your graph. Choose the font size based on where the chart will end up.
+If you use a 12pt font, but then scale the image down in a two-column paper template, you'll end up with text that's too small to read.</p>
+<p>Likewise, consider making the curve in your line plot just a tad thicker. It looks nice, and can be clearer.</p>
+<h3>9. Use vector graphics.</h3>
+<p>Your plotting software no doubt supports saving your plot as a vector image. The great thing about vector images
+is that they <span style="font-size: 2rem">scale</span>. You can zoom in on them, and they'll remain crisp. They don't have typical compression artifacts. (Whatever you do, please don't save your plot as a JPEG!)</p>
+<p>Save your plot as SVG, EPS, or PDF. Another benefit is that you can do finishing touches in vector graphics software such as <a href="https://inkscape.org/">Inkscape</a>.</p>
+<p>Just compare this (ridiculously exaggerated low-res) PNG with this SVG:</p>
+<figure>
+<img src="../assets/graphs/lowres.png" width="525px" alt="A low-resolution plot"/>
+<figcaption>
+<em>Where did I leave my glasses?</em>
+<figcaption>
+</figure>
+<br/>
+<figure>
+<img src="../assets/graphs/first_plot.svg" width="525px" alt="A low-resolution plot"/>
+<figcaption>
+<em>Nice and crisp.</em>
+<figcaption>
+</figure>
+<h3>10. Don't use a legend.</h3>
+<p>Legends are important: see point 7. Your audience needs to know what they're looking at. But consider <a href="https://100.datavizproject.com/data-type/viz59/">this visualisation</a>. See how the curves are labeled in the plot itself?</p>
+<aside style="color: var(--sidenote-color); font-size: 0.75rem">The circular axis, which "has no particular purpose per se," is an awful choice here, in my opinion. Sure, it looks "interesting," but my first thought was "Why is this a circle? Does it represent a clock? A year?" Even knowing it doesn't have meaning, it continues to confuse and distract me.</aside>
+<p>It's not always possible, but if it is, putting labels next to the data is a very clear way of labeling items in a plot. No eye movements are needed – in an instant, your audience knows what each curve or point means.</p>
+<h3>An example</h3>
+<p>Let's go through all of these points one by one, to go from a default graph generated with Matplotlib to a clear visualisation.</p>
+<p>We'll start from this plot, represending noisy measurements of a sinusoidal signal, filtered with a Kalman filter:</p>
+<p><img src="../assets/graphs/plot01.png" alt="" /></p>
+<p>This is the default output of Matplotlib without any visual tweaking.</p>
+<p>Let's improve upon this with the lessons we've learned.</p>
+<h4>Finding the message</h4>
+<p>The main message we want to tell is that <a href="https://en.wikipedia.org/wiki/Kalman_filter">Kalman filters</a> can improve a system's accuracy by filtering noisy sensor measurements.</p>
+<p>Our main message could be almost exactly this: &quot;Kalman filter improves accuracy of system state measurement.&quot; This will be the title of our plot.</p>
+<h4>Picking a plot type</h4>
+<p>Instead of a plain line plot, a better choice is a combination of a scatter and a line plot.
+Raw measurements could be represented as points, while a curve through the filtered estimates illustrates the system's behaviour.</p>
+<p><img src="../assets/graphs/plot02.png" alt="" /></p>
+<h4>Adding (or removing) colour</h4>
+<p>Blue on blue isn't super clear. Let's go for a simple and clean two-colour scheme: measurements in black, filtered estimate in red.</p>
+<p><img src="../assets/graphs/plot03.png" alt="" /></p>
+<h4>Removing noise</h4>
+<p>Here's where everything that isn't absolutely necessary should be removed.</p>
+<p><img src="../assets/graphs/plot04.png" alt="" /></p>
+<p>Notice the shortened spines, and the removal of the useless top and right spines. The legend is omitted for now; I'll add it back later.</p>
+<h4>Making things readable</h4>
+<p>Let's make the labels horizontal. I'll give &quot;Position&quot; a better spot shortly.</p>
+<p><img src="../assets/graphs/plot05.png" alt="" /></p>
+<h4>Adding labels</h4>
+<p>All necessary labels have been added, so this step can be skipped.</p>
+<h4>Making things readable (again)</h4>
+<p>For this use case, the fonts are an acceptable size. This mostly depends on your target medium.</p>
+<h4>Using vector graphics</h4>
+<p>All of the above are PNG renders. Let's save as vector graphics and notice the difference when zooming in.</p>
+<p><img src="../assets/graphs/plot06.svg" alt="" /></p>
+<h4>Making it legendary</h4>
+<p>Now that we have an SVG file, I'll do some post-editing in Inkscape, finalising the plot and – in the process – adding back the legend.</p>
+<p><img src="../assets/graphs/final_plot.svg" alt="" /></p>
+<p>I chose empty circles for the scatter plot to reduce clutter, moved &quot;Position&quot; to the top of the graph, and visually connected the legend to the graph, reducing required eye movements.</p>
+<hr />
+<p>And there you have it: a clear and beautiful plot. For a final comparison, here are the original and the end result side‑by‑side.</p>
+<p><img src="../assets/graphs/plot01.png" alt="" /></p>
+<p><img src="../assets/graphs/final_plot.svg" alt="" /></p>
+<p>I hope this blog post was useful, and that it convinced you that making beautiful and effective graphs can be easy and worth it.</p>
+
+</article>
+
+<script src="../scripts/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>
