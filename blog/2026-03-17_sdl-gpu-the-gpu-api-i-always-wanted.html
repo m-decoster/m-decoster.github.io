@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <title>Mathieu De Coster - SDL_GPU: the GPU API I always wanted</title>
+
+    <meta charset="UTF-8">
+    <meta name="description" content="Webpage of Mathieu De Coster">
+    <meta name="author" content="Mathieu De Coster">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#333" media="(prefers-color-scheme: dark)">
+
+    <link rel="stylesheet" href="../styles/style.css">
+    <!-- favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+    <link rel="manifest" href="../icons/site.webmanifest">
+    <link rel="mask-icon" href="../icons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="../icons/browserconfig.xml">
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    
+<link rel="stylesheet"
+      href="../styles/atom-one-lightdark.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>
+            <span id="firstname">Mathieu</span>
+            <span>De Coster</span>
+        </h1>
+        <nav>
+                
+                        <a href="../index.html">About</a>
+                
+                        <a href="../research.html">Research</a>
+                
+                        <a href="../blog/page0.html">Blog</a>
+                    
+                
+                        <a href="../projects.html">Projects</a>
+                
+                        <a href="../contact.html">Contact</a>
+        </nav>
+    </header>
+    
+    
+<article id="post">
+    <h2>SDL_GPU: the GPU API I always wanted</h2>
+    <p class="post-preview-date">17 March 2026</p>
+    <p>For a long time, writing a graphics program meant picking your poison. SDL_GPU, shipped with SDL3, hits the balance between usability and power just right.</p>
+<p>OpenGL is battle-tested, but its age shows. The API is a sprawling collection of decades-old state-machine logic. What was &quot;best practice&quot; in OpenGL 2.1 is often a performance trap in 3.3, and OpenGL 4.6 is an entirely different beast altogether. While it is theoretically cross-platform, the reality is messy: mobile requires OpenGL ES, and Apple famously deprecated support years ago. Vulkan has effectively succeeded it – even if it was never intended as a replacement.</p>
+<p>Modern APIs map better to current GPU architectures, but they come with complexity. Vulkan gives you total control but asks you to write four hundred lines before you can clear the screen. Direct3D 12 is the same story, but only on Windows. I've heard Metal is great, but I don't own a Macbook anymore.</p>
+<p>I have been playing around with creating a small game with SDL3, SDL_GPU, and C++ to learn modern graphics programming. (I last dabbled with OpenGL <a href="https://github.com/m-decoster/glExamples">nearly a decade ago</a>.) I've always had a soft spot for SDL's clean C API and good documentation, and SDL3 feels like a perfected version of the library.</p>
+<p>The thing that sold me first was how shaders are handled. You write HLSL once, and at build time SDL_shadercross compiles it to SPIR-V for Vulkan, DXIL for DirectX 12, and MSL for Metal. At runtime, you ask SDL which formats the device supports and load the right binary. I write the shader logic once, in a language I know, and the game runs on every modern desktop platform without a single <code>#ifdef</code>.</p>
+<p>The second thing I appreciate is that SDL_GPU is explicit without being overwhelming. It exposes command buffers, copy passes, and render passes, but doesn't make you manage synchronisation primitives and memory barriers. My renderer currently has a clear two-phase structure per frame:</p>
+<pre><code class="language-cpp">SDL_GPUCommandBuffer* cmd  = SDL_AcquireGPUCommandBuffer(device);
+
+SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass(cmd);
+// Upload vertex data to GPU buffers
+SDL_EndGPUCopyPass(copy);
+
+SDL_GPURenderPass* pass = SDL_BeginGPURenderPass(cmd, &amp;color_target, 1, nullptr);
+// Issue draw calls
+SDL_EndGPURenderPass(pass);
+
+SDL_SubmitGPUCommandBuffer(cmd);
+</code></pre>
+<p>This maps directly to how the GPU actually works. Data moves in the copy pass. Drawing happens in the render pass. I can clearly see where allocations happen and when commands are submitted. While I haven't needed multi-threaded command buffer creation yet, the API is designed to handle it when/if the time comes.</p>
+<p>The CPU-to-GPU transfer model is a good example of the expliciteness of the API. You allocate a transfer buffer on the CPU side, write your vertex data into it, and send it to the GPU-side buffer in the copy pass. More code than OpenGL's <code>glBufferData</code>, yes. But you understand exactly what is happening, you control when it happens, and it scales correctly to more complex scenarios.</p>
+<p>The best thing is that the API surface is relatively small and easy to grasp. For Vulkan, you need to read a couple of books to even understand the concepts. With SDL_GPU, all you need is some HTML documentation and header files.</p>
+<p>It has been years since I really dived into graphics, and for the first time in a long time, I'm actually having fun programming the hardware again.</p>
+
+</article>
+
+<script src="../scripts/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<noscript>You appear to have disabled JavaScript. No worries, the only thing that will not work is code highlighting.</noscript>
+
+
+</body>
+
+</html>
