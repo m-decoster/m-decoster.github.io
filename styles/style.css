@@ -120,16 +120,8 @@ p {
 }
 
 header {
-    margin-top: 20px;
-    margin-bottom: 50px;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-}
-
-header {
-    display: block;
     margin-top: 0;
+    margin-bottom: 50px;
 }
 
 nav {

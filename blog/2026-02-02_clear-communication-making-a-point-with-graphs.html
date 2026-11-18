@@ -110,14 +110,14 @@ is that they <span style="font-size: 2rem">scale</span>. You can zoom in on them
 <img src="../assets/graphs/lowres.png" width="525px" alt="A low-resolution plot"/>
 <figcaption>
 <em>Where did I leave my glasses?</em>
-<figcaption>
+</figcaption>
 </figure>
 <br/>
 <figure>
-<img src="../assets/graphs/first_plot.svg" width="525px" alt="A low-resolution plot"/>
+<img src="../assets/graphs/first_plot.svg" width="525px" alt="The same plot as a sharp vector graphic"/>
 <figcaption>
 <em>Nice and crisp.</em>
-<figcaption>
+</figcaption>
 </figure>
 <h3>10. Don't use a legend.</h3>
 <p>Legends are important: see point 7. Your audience needs to know what they're looking at. But consider <a href="https://100.datavizproject.com/data-type/viz59/">this visualisation</a>. See how the curves are labeled in the plot itself?</p>
@@ -126,7 +126,7 @@ is that they <span style="font-size: 2rem">scale</span>. You can zoom in on them
 <h3>An example</h3>
 <p>Let's go through all of these points one by one, to go from a default graph generated with Matplotlib to a clear visualisation.</p>
 <p>We'll start from this plot, representing noisy measurements of a signal, filtered with a Kalman filter:</p>
-<p><img src="../assets/graphs/plot01.png" alt="" /></p>
+<p><img src="../assets/graphs/plot01.png" alt="Default Matplotlib line plot of a noisy position measurement in blue and a Kalman filter estimate in orange over time" /></p>
 <p>This is the default output of Matplotlib without any visual tweaking.</p>
 <p>Let's improve upon this with the lessons we've learned.</p>
 <h4>Finding the message</h4>
@@ -135,32 +135,32 @@ is that they <span style="font-size: 2rem">scale</span>. You can zoom in on them
 <h4>Picking a plot type</h4>
 <p>Instead of a plain line plot, a better choice is a combination of a scatter and a line plot.
 Raw measurements could be represented as points, while a curve through the filtered estimates illustrates the system's behaviour.</p>
-<p><img src="../assets/graphs/plot02.png" alt="" /></p>
+<p><img src="../assets/graphs/plot02.png" alt="The measurements shown as blue dots and the Kalman estimate as a blue line, with the title stating the message" /></p>
 <h4>Adding (or removing) colour</h4>
 <p>Blue on blue isn't super clear. Let's go for a simple and clean two-colour scheme: measurements in black, filtered estimate in red.</p>
-<p><img src="../assets/graphs/plot03.png" alt="" /></p>
+<p><img src="../assets/graphs/plot03.png" alt="The same plot with the measurements in black and the Kalman estimate in red" /></p>
 <h4>Removing noise</h4>
 <p>Here's where everything that isn't absolutely necessary should be removed.</p>
-<p><img src="../assets/graphs/plot04.png" alt="" /></p>
+<p><img src="../assets/graphs/plot04.png" alt="The same plot without the legend, box, and top and right axes, with shortened axis lines" /></p>
 <p>Notice the shortened spines, and the removal of the useless top and right spines. The legend is omitted for now; I'll add it back later.</p>
 <h4>Making things readable</h4>
 <p>Let's make the labels horizontal. I'll give &quot;Position&quot; a better spot shortly.</p>
-<p><img src="../assets/graphs/plot05.png" alt="" /></p>
+<p><img src="../assets/graphs/plot05.png" alt="The same plot with a horizontal Position label" /></p>
 <h4>Adding labels</h4>
 <p>All necessary labels have been added, so this step can be skipped.</p>
 <h4>Making things readable (again)</h4>
 <p>For this use case, the fonts are an acceptable size. This mostly depends on your target medium.</p>
 <h4>Using vector graphics</h4>
 <p>All of the above are PNG renders. Let's save as vector graphics and notice the difference when zooming in.</p>
-<p><img src="../assets/graphs/plot06.svg" alt="" /></p>
+<p><img src="../assets/graphs/plot06.svg" alt="The same plot saved as a vector graphic" /></p>
 <h4>Making it legendary</h4>
 <p>Now that we have an SVG file, I'll do some post-editing in Inkscape, finalising the plot and – in the process – adding back the legend.</p>
-<p><img src="../assets/graphs/final_plot.svg" alt="" /></p>
+<p><img src="../assets/graphs/final_plot.svg" alt="Final plot: measurements as open black circles, the filter estimate as a red line, labels placed next to the data, and the Position label at the top" /></p>
 <p>I chose empty circles for the scatter plot to reduce clutter, moved &quot;Position&quot; to the top of the graph, and visually connected the legend to the graph, reducing required eye movements.</p>
 <hr />
 <p>And there you have it: a clear and beautiful plot. For a final comparison, here are the original and the end result side‑by‑side.</p>
-<p><img src="../assets/graphs/plot01.png" alt="" /></p>
-<p><img src="../assets/graphs/final_plot.svg" alt="" /></p>
+<p><img src="../assets/graphs/plot01.png" alt="Default Matplotlib line plot of a noisy position measurement in blue and a Kalman filter estimate in orange over time" /></p>
+<p><img src="../assets/graphs/final_plot.svg" alt="Final plot: measurements as open black circles, the filter estimate as a red line, labels placed next to the data, and the Position label at the top" /></p>
 <p>I hope this blog post was useful, and that it convinced you that making beautiful and effective graphs can be easy and worth it.</p>
 
 </article>
